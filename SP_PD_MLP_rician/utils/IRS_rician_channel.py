@@ -54,14 +54,14 @@ def importData(data_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef='identity',
     # H_iu = torch.ones(data_size, n_R, n_I, dtype=torch.complex64).to(device)
     H_c = batch_khatri_rao(H_bi.unsqueeze(0).repeat(data_size, 1, 1).permute(0,2,1), H_iu)
     # H_c = torch.view_as_complex(torch.normal(H_mean, H_std, size=(data_size, n_T*n_R, n_I, 2))/sqrt2).to(device)
+    h_mean = H_c.mean()
+    h_std = H_c.std()
+    ############################################################################
+    if case == 'train':
+        H_c = (H_c - h_mean) / h_std
+        print('Training data')
+    ############################################################################
     h_c = vec(H_c)
-    # h_c = H_c.reshape(data_size, n_R*n_T*n_I)
-    h_mean = h_c.mean()
-    h_std = h_c.std()
-    # if case == 'train':
-    ############################################################################
-    # H_c = (H_c - h_mean) / h_std
-    ############################################################################
 
     Psi = get_IRS_coef(IRScoef, n_R, n_I, n_T, T).to(device).to(torch.complex64)
     Sgnl = torch.matmul(H_c, Psi)

@@ -1,0 +1,7 @@
+# test only 1M dataset with 60 epochs
+python IRS_simulation/SP_PD_MLP_rician/SP_PD_MLP_ric_train.py -psi i -cuda 1 -hsz 1024 -nR 4 -nI 8 -nT 4 -T 32 -ep 60 -lr 1e-4 -nmb 10
+
+# full 10M dataset with 150~300 epochs
+python IRS_simulation/SP_PD_MLP_rician/SP_PD_MLP_ric_train.py -psi i -cuda 1 -hsz 1024 -nR 4 -nI 8 -nT 4 -T 32 -ep 300 -lr 1e-4 -nmb 100
+python IRS_simulation/SP_PD_MLP_rician/SP_PD_MLP_ric_train.py -psi d -cuda 1 -hsz 1024 -nR 4 -nI 8 -nT 4 -T 32 -ep 150 -lr 1e-4 -nmb 100
+python IRS_simulation/SP_PD_MLP_rician/SP_PD_MLP_ric_train.py -psi h -cuda 1 -hsz 1024 -nR 4 -nI 8 -nT 4 -T 32 -ep 150 -lr 1e-4 -nmb 100

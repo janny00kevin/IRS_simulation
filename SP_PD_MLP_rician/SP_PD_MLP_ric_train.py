@@ -1,8 +1,8 @@
 import torch
 from torch.optim import Adam
 import matplotlib.pyplot as plt
-# import matplotlib
-# matplotlib.use('Agg')
+import matplotlib
+matplotlib.use('Agg')
 from tqdm import tqdm
 # import h5py
 from utils.batch_khatri_rao import batch_khatri_rao
@@ -55,7 +55,7 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
         }
         # torch.save(checkpoint, './simulation/result/SP_UMa_lr%s_%s_ep%s_SNR%s.pt' %(lr, [2*n_R*T]+hidden_sizes+[2*n_R*n_T+2],train_epochs,SNR_dB.tolist()))
         
-        save_path = os.path.join(script_dir, 'result', '%.3f_SP_ray_MLP_psi_%s_lr%.0e_%s_ep%s.pt' 
+        save_path = os.path.join(script_dir, 'result', '%.3f_SP_ray_MLP_psi_%s_lr%.0e_%s_ep%s_3snr.pt' 
             %(testing_loss[itr-1].item(), IRS_coe_type, lr, [2*n_R*T]+hidden_sizes+[2*n_R*n_T*n_I+2], train_epochs))
         torch.save(checkpoint, save_path)
     
@@ -94,7 +94,7 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
         t_MSE_Plot(epochs)
         lambPlot(epochs)
 
-        save_path = os.path.join(script_dir, 'result', '%.3f_SP_ray_MLP_psi_%s_lr%.0e_%s_ep%s.pdf' 
+        save_path = os.path.join(script_dir, 'result', '%.3f_SP_ray_MLP_psi_%s_lr%.0e_%s_ep%s_3snr.pdf' 
                     %(testing_loss[itr-1].item(), IRS_coe_type, lr, [2*n_R*T]+hidden_sizes+[2*n_R*n_T*n_I+2], train_epochs))
         plt.savefig(save_path)
         plt.close()
@@ -116,13 +116,14 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
     # channel_information = [0, 1, 0, 0.1]
     # H_mean, H_sigma, W_Mean = channel_information
     test_size = 2000                                                       
-    SNR_dB = torch.tensor(list(range(min(snr),max(snr)+1,2))).to(device)   ###
+    SNR_dB = torch.tensor(list(range(min(snr),max(snr)+1,7))).to(device)   ###
     SNR_lin = 10**(SNR_dB/10.0)
     print('SNR_dB:',SNR_dB)
     # print('channel:',channel)
 
     ## load training and testing data
     h, y, h_mean, h_std = importData(train_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, case = 'train')
+    # print('type:', h_mean.dtype, h_std.dtype)
     h_test, y_test, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, case = 'test')
     print('h_mean:',h_mean, 'h_std:',h_std)
     # Y_test = (torch.view_as_complex(y_test.reshape(test_size,n_R,T,2))-h_mean)/h_std
@@ -164,7 +165,8 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
             logits_net.train()
             logits = logits_net(tau_y)
             tau_tbh_cplx = turnCplx(logits)
-            # tau_h_hat = Normal(logits[:,::2], torch.exp(logits[:,1::2])).sample()
+            # logits = logits_net(turnReal(turnCplx(tau_y)-h_mean)/h_std) # nmlz
+            # tau_tbh_cplx = turnCplx(logits)*h_std + h_mean
             
             ### compute loss and update
             optimizer_pri.zero_grad()
@@ -190,8 +192,8 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
                 ## validation
                 logits_net.eval()
                 # logits_test = logits_net(turnReal((turnCplx(y_test)-h_mean)/h_std))
-                logits_test = logits_net(y_test)
-                test_tbh_cplx = turnCplx(logits_test)
+                logits_test = logits_net(turnReal(turnCplx(y_test)-h_mean)/h_std)
+                test_tbh_cplx = turnCplx(logits_test)*h_std + h_mean
                 norm_test = torch.norm(turnCplx(h_test) - (D.matmul(test_tbh_cplx.T).T), dim=1)**2
                 testing_loss[itr-1] = (norm_test / torch.norm(h_test, dim=1)**2).mean()
                 loss_n4 = (norm_test / torch.norm(h_test, dim=1)**2)[:test_size//len(SNR_dB)//2].mean()

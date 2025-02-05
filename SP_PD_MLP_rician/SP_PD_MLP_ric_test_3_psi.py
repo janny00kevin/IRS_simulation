@@ -19,12 +19,12 @@ device = torch.device("cuda:1")
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-# filename1 = os.path.join(script_dir, 'result', '0.378_SP_ray_MLP_psi_i_lr1e-04_[256, 1024, 258]_ep500.pt')
-# checkpoint1 = torch.load(filename1, weights_only=False)
-# filename2 = os.path.join(script_dir, 'result', '0.378_SP_ray_MLP_psi_d_lr1e-04_[256, 1024, 258]_ep500.pt')
-# checkpoint2 = torch.load(filename2, weights_only=False)
-# filename3 = os.path.join(script_dir, 'result', '0.377_SP_ray_MLP_psi_h_lr1e-04_[256, 1024, 258]_ep500.pt')
-# checkpoint3 = torch.load(filename3, weights_only=False)
+filename1 = os.path.join(script_dir, 'result', '0.160_SP_ray_MLP_psi_i_lr1e-04_[256, 1024, 258]_ep300.pt')
+checkpoint1 = torch.load(filename1, weights_only=False)
+filename2 = os.path.join(script_dir, 'result', '0.160_SP_ray_MLP_psi_d_lr1e-04_[256, 1024, 258]_ep150.pt')
+checkpoint2 = torch.load(filename2, weights_only=False)
+filename3 = os.path.join(script_dir, 'result', '0.160_SP_ray_MLP_psi_h_lr1e-04_[256, 1024, 258]_ep150.pt')
+checkpoint3 = torch.load(filename3, weights_only=False)
 
 # h_mean2 = checkpoint2['h_mean'].to(device)
 # h_std2 = checkpoint2['h_std'].to(device)
@@ -33,9 +33,9 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 # filename4 = '0.008_SP_elwRe_UMa_lr1e-04_[288, 3, 256, 1024, 290]_ep17.pt'             ###
 # checkpoint4 = torch.load('./simulation/result/model/'+filename4)         #
 
-# logits_net1 = checkpoint1['logits_net'].to(device)
-# logits_net2 = checkpoint2['logits_net'].to(device)
-# logits_net3 = checkpoint3['logits_net'].to(device) 
+logits_net1 = checkpoint1['logits_net'].to(device)
+logits_net2 = checkpoint2['logits_net'].to(device)
+logits_net3 = checkpoint3['logits_net'].to(device) 
 
 # logits_net4 = checkpoint4['logits_net'].to(device)                         #
 # n_R, n_T, T = [checkpoint1['n_R'], checkpoint1['n_T'], checkpoint1['T']]
@@ -75,8 +75,6 @@ n_I = 8
 # data_size = h.size(0)
 # h = torch.complex(h[:,:144],h[:,144:]).to(torch.complex64)
 # h = h
-
-
 # n_R, n_T, T = 4, 36, 36
 # rnd_sample = 1
 
@@ -90,9 +88,9 @@ n_I = 8
 # Ph = (H.abs()**2).mean()
 # print(Ph)
 
-h_test, y_test_i, _, _ = importData(datasize_per_SNR*len(SNR_lin), n_R, n_I, n_T, T, SNR_lin, device, IRScoef='i')
-_, y_test_d, _, _ = importData(datasize_per_SNR*len(SNR_lin), n_R, n_I, n_T, T, SNR_lin, device, IRScoef='d')
-_, y_test_h, _, _ = importData(datasize_per_SNR*len(SNR_lin), n_R, n_I, n_T, T, SNR_lin, device, IRScoef='h')
+h_test, y_test_i, h_mean, h_std = importData(datasize_per_SNR*len(SNR_lin), n_R, n_I, n_T, T, SNR_lin, device, IRScoef='i', case='test')
+_, y_test_d, _, _ = importData(datasize_per_SNR*len(SNR_lin), n_R, n_I, n_T, T, SNR_lin, device, IRScoef='d', case='test')
+_, y_test_h, _, _ = importData(datasize_per_SNR*len(SNR_lin), n_R, n_I, n_T, T, SNR_lin, device, IRScoef='h', case='test')
 h_test = h_test.reshape(len(SNR_lin), datasize_per_SNR, n_R*n_T*n_I*2)
 y_test_i = y_test_i.reshape(len(SNR_lin), datasize_per_SNR, n_R*T*2)
 y_test_h = y_test_h.reshape(len(SNR_lin), datasize_per_SNR, n_R*T*2)
@@ -160,17 +158,17 @@ for idx, snr in enumerate(SNR_lin):
     # IRS_coef_type = checkpoint1['IRS_coe_type']
 
     # # Y_nmlz = (y.reshape(data_size,n_R,T)-h_mean2)/h_std2
-    # logits1 = logits_net1(y_test_i[idx])
-    # test_tbh_cplx = turnCplx(logits1)
-    # norm_1 = torch.norm(turnCplx(h_test[idx]) - D.matmul(test_tbh_cplx.T).T, dim=1)**2
+    logits1 = logits_net1(turnReal(turnCplx(y_test_i[idx])-h_mean)/h_std)
+    test_tbh_cplx = turnCplx(logits1)*h_std + h_mean
+    norm_1 = torch.norm(turnCplx(h_test[idx]) - D.matmul(test_tbh_cplx.T).T, dim=1)**2
 
-    # logits2 = logits_net2(y_test_d[idx])
-    # test_tbh_cplx = turnCplx(logits2)
-    # norm_2 = torch.norm(turnCplx(h_test[idx]) - D.matmul(test_tbh_cplx.T).T, dim=1)**2
+    logits2 = logits_net2(turnReal(turnCplx(y_test_d[idx])-h_mean)/h_std)
+    test_tbh_cplx = turnCplx(logits2)*h_std + h_mean
+    norm_2 = torch.norm(turnCplx(h_test[idx]) - D.matmul(test_tbh_cplx.T).T, dim=1)**2
 
-    # logits3 = logits_net3(y_test_h[idx])
-    # test_tbh_cplx = turnCplx(logits3)
-    # norm_3 = torch.norm(turnCplx(h_test[idx]) - D.matmul(test_tbh_cplx.T).T, dim=1)**2
+    logits3 = logits_net3(turnReal(turnCplx(y_test_h[idx])-h_mean)/h_std)
+    test_tbh_cplx = turnCplx(logits3)*h_std + h_mean
+    norm_3 = torch.norm(turnCplx(h_test[idx]) - D.matmul(test_tbh_cplx.T).T, dim=1)**2
 
 
     '''
@@ -189,10 +187,10 @@ for idx, snr in enumerate(SNR_lin):
     # norm_4 = torch.norm(h - D.matmul(test_tbh_cplx.T).T*h_std2-h_mean2, dim=1)**2
 
 
-    # with torch.no_grad():
-    #     NMSE_1[idx] = 10*torch.log10((norm_1 / torch.norm(h_test[idx], dim=1)**2).mean())
-    #     NMSE_2[idx] = 10*torch.log10((norm_2 / torch.norm(h_test[idx], dim=1)**2).mean())
-    #     NMSE_3[idx] = 10*torch.log10((norm_3 / torch.norm(h_test[idx], dim=1)**2).mean())
+    with torch.no_grad():
+        NMSE_1[idx] = 10*torch.log10((norm_1 / torch.norm(h_test[idx], dim=1)**2).mean())
+        NMSE_2[idx] = 10*torch.log10((norm_2 / torch.norm(h_test[idx], dim=1)**2).mean())
+        NMSE_3[idx] = 10*torch.log10((norm_3 / torch.norm(h_test[idx], dim=1)**2).mean())
         # NMSE_4[idx] = 10*torch.log10((norm_4 / torch.norm((h), dim=1)**2).mean()) #
 
     NMSE_LS_i[idx] = 10*torch.log10((norm_LS_i / torch.norm(h_test[idx], dim=1)**2).mean())
@@ -221,10 +219,11 @@ plt.plot(SNR_dB, NMSE_LM_h.to('cpu'), label='LMMSE with Hadamard', linewidth=1, 
 plt.plot(SNR_dB, NMSE_1.to('cpu'), label='NP PD with identity', linewidth=1, linestyle='--', marker='x', color="tab:orange")   ###
 plt.plot(SNR_dB, NMSE_2.to('cpu'), label='NP PD with DFT', linewidth=1, linestyle=':', marker='x', color="tab:orange")  ###
 plt.plot(SNR_dB, NMSE_3.to('cpu'), label='NP PD with Hadamard', linewidth=1, linestyle='-', marker='x', color="tab:orange")  ###
+
 # plt.plot(SNR_dB, NMSE_3,'-x', label='channelNet w/o act. func.')  ###
 # plt.plot(SNR_dB, NMSE_4,'-x', label='channelNet w/ act. func.')  ###
 
-plt.suptitle("NP PD trained MMSE MIMO ChEst with IRS vs SNR in Rician")
+plt.suptitle("NP PD trained MMSE MIMO nmlz ChEst with IRS vs SNR in Rician")
 # plt.title(' $[n_R,n_T]$:[4,36], MLP size:[288, 2048, 2048, 576] ')
 
 # plt.suptitle("MMSE based PD with PG channel estimator")
@@ -235,6 +234,6 @@ plt.ylabel('NMSE(dB)')
 plt.legend()
 plt.grid(True)
 # plt.savefig('./simulation/result/snr/LS_mlp_Chest_-4_vs_i2.png')   ###
-save_path = os.path.join(script_dir, 'snr', 'SP_ric_i_d_h_vs_LS_LMMSE_MLP_100nmb.pdf')#  %(IRS_coef_type)
+save_path = os.path.join(script_dir, 'snr', 'SP_ric_idh_MLP_10M_nmlzdata.pdf')#  %(IRS_coef_type)
 plt.savefig(save_path)   ###
 
