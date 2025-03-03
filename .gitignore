@@ -4,3 +4,16 @@ SP_PD_MLP_rician/result/0.219_SP_ric_elbir_psi_d_lr1e-04_\[256, 1, 258\]_ep10.pt
 SP_PD_MLP_rician/result/0.209_SP_ric_elbir_psi_h_lr1e-04_\[256, 1, 258\]_ep10.pt
 # OR, the elbir pt files only can be ignored following beneath structure:
 # SP_PD_MLP_rician/result/*_ep10.pt
+
+SP_PD_MLP_rician/result/0.207_SP_ric_elbir_psi_i_lr1e-02_ep8.pt
+SP_PD_MLP_rician/result/0.214_SP_ric_elbir_psi_h_lr1e-02_ep8.pt
+SP_PD_MLP_rician/result/0.197_SP_ric_elbir_psi_d_lr1e-02_ep11.pt
+
+SP_PD_MLP_rician/result/wrong_ISTA/
+SP_PD_MLP_rician/result/wrong_channelNet/
+
+sBSsIRSsUE_UMa/channel/UMa_BI_train_1K_4_8_.mat
+sBSsIRSsUE_UMa/channel/UMa_BI_train_1M_4_8_.mat
+sBSsIRSsUE_UMa/channel/UMa_IU_train_1K_8_4_.mat
+sBSsIRSsUE_UMa/channel/UMa_IU_train_1M_8_4_.mat
+

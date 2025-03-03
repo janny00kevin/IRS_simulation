@@ -9,6 +9,8 @@ from utils.IRS_rician_channel import importData
 from utils.complex_utils import turnReal, turnCplx, vec
 from utils.NN_model.ISTANet import ISTANet
 import os
+import time
+
 
 def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3, 
         num_trajectories = 1e4, num_minibatch = 10, cuda = 1, snr = 0, channel = 'UMa', IRS_coe_type = 'i'):
@@ -16,7 +18,7 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
     def parametersSave():
     ## save the model and parameters
         checkpoint = {
-            'logits_net': logits_net.state_dict(),
+            'logits_net': logits_net,
             'hidden_sizes': hidden_sizes,
             # 'num_channel': num_channel,
             # 'filt_size': filt_size,
@@ -99,7 +101,8 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
     #     # calculate_norm(y, X_tilde, D, h_tilde) < epsilon or k == num_iterations-1
     #     gradient_norm = grad_norm(logits_net)
     #     return gradient_norm <= epsilon and priFeasibility <= 0 and lambda_val.real >= 0 and lambda_val.real*priFeasibility <= epsilon
-    
+    print("section 1")
+    time.sleep(5)
     device = torch.device("cuda:%s"%(cuda) if torch.cuda.is_available() else "cpu")
     n_T, n_R, n_I, T = size
     train_size = num_minibatch*num_trajectories
@@ -107,14 +110,18 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
     SNR_dB = torch.tensor(list(range(min(snr),max(snr)+1,2))).to(device)   ###
     SNR_lin = 10**(SNR_dB/10.0)
     print('training with SNR_dB:',SNR_dB)
+    print("section 2")
+    time.sleep(5)
 
     ## load training and testing data
-    allocated_memory = torch.cuda.memory_allocated(device)
-    print(f"before data import: {allocated_memory / 1024**2:.2f} MB")
+    # allocated_memory = torch.cuda.memory_allocated(device)
+    # print(f"before data import: {allocated_memory / 1024**2:.2f} MB")
     h, y, h_mean, h_std = importData(train_size, n_R, n_I, n_T, T, SNR_lin, 'cpu', IRScoef=IRS_coe_type, case = 'train')
     h_test, y_test, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, case = 'test')
-    allocated_memory = torch.cuda.memory_allocated(device)
-    print(f"after data import: {allocated_memory / 1024**2:.2f} MB")
+    print("after data import")
+    time.sleep(5)
+    # allocated_memory = torch.cuda.memory_allocated(device)
+    # print(f"after data import: {allocated_memory / 1024**2:.2f} MB")
     # Y_test_nmlz = (turnCplx(y_test).reshape(test_size, n_T*n_R, T//n_T) - h_mean)/h_std
     print('h_mean:',h_mean, 'h_std:',h_std)
     # Y_test = (torch.view_as_complex(y_test.reshape(test_size,n_R,T,2))-h_mean)/h_std
@@ -131,6 +138,8 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
     optimizer_pri = Adam(logits_net.parameters(), lr=lr)
     allocated_memory = torch.cuda.memory_allocated(device)
     print(f"after model build: {allocated_memory / 1024**2:.2f} MB")
+    print("after model build")
+    time.sleep(5)
 
     ## initialize the training record
     num_iters = num_epochs*num_minibatch
@@ -139,6 +148,8 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
     t_rec = torch.zeros(num_iters).to(device)
     # lamb_rec = torch.zeros(num_iters).to(device)
     train_epochs = 0
+    print("after initialization")
+    time.sleep(5)
 
     ### training
     pbar = tqdm(total = num_iters)
@@ -153,6 +164,9 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
         idx = torch.randperm(train_size)
         y.copy_(y[idx, :])
         h.copy_(h[idx, :])
+        if i == 0:
+            print("after shuffle")
+            time.sleep(5)
         # allocated_memory = torch.cuda.memory_allocated(device)
         # print(f"after shuffle: {allocated_memory / 1024**2:.2f} MB")
         for j in range(num_minibatch):
@@ -160,9 +174,15 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
             ### trajectories training data
             tau_y = y[j*num_trajectories:(j+1)*num_trajectories, :].to(device)
             tau_h = h[j*num_trajectories:(j+1)*num_trajectories, :].to(device)
+            if itr == 1:
+                print("after tau")
+                time.sleep(5)
             ### feed into the NN
             logits_net.train()
             [logits,layers_sym] = logits_net(tau_y)#torch.tensor(logits_net(tau_y), dtype=torch.float32)
+            if itr == 1:
+                print("after feedforward")
+                time.sleep(5)
             # print(len(logits), len(logits[0]), len(logits[0][0]))
             # print(logits.dtype())
             # tau_tbh_cplx = turnCplx(logits)
@@ -177,7 +197,10 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
             # lamb_dt = lamb.detach().clone()
 
             ## primal variable theta update
-            loss_pri = norm.mean()# + 0.01 * torch.sum(torch.stack(layers_sym))
+            if itr == 1:
+                print((torch.stack(layers_sym).reshape(5,-1,2*n_T*n_I*n_R).norm(dim=-1)**2).shape)
+            # loss_pri = norm.mean() + 0.01 * torch.mean(torch.stack(layers_sym).reshape(5,-1,2*n_T*n_I*n_R).norm(dim=-1)**2)
+            loss_pri = torch.mean(norm + 0.01 * (torch.stack(layers_sym).reshape(5,-1,2*n_T*n_I*n_R).norm(dim=-1)**2).sum(dim=0))
             loss_pri.backward()
             optimizer_pri.step()
             

@@ -1,4 +1,5 @@
 ### 1AP 1IRS 1UE rician fading channel simulation
+# training seed = 0
 # test only 1M dataset with 60 epochs
 python IRS_simulation/SP_PD_MLP_rician/SP_PD_MLP_ric_train.py -psi i -cuda 1 -hsz 1024 -nR 4 -nI 8 -nT 4 -T 32 -ep 60 -lr 1e-4 -nmb 10
 
@@ -10,9 +11,35 @@ python IRS_simulation/SP_PD_MLP_rician/SP_PD_MLP_ric_train.py -psi h -cuda 1 -hs
 ### test only MLP for 3 diff psi and LS, LMMSE
 python SP_PD_MLP_ric_test_3_psi.py
 
-# channelNet comparison
-python IRS_simulation/SP_PD_MLP_rician/SP_elbir_ric_train.py -psi i -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 10 -lr 1e-4 -nmb 100
-python IRS_simulation/SP_PD_MLP_rician/SP_elbir_ric_train.py -psi d -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 10 -lr 1e-4 -nmb 100
-python IRS_simulation/SP_PD_MLP_rician/SP_elbir_ric_train.py -psi h -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 10 -lr 1e-4 -nmb 100
+    #(WRONG channelNet and ISTA-Net)
+    # channelNet comparison
+    python IRS_simulation/SP_PD_MLP_rician/SP_elbir_ric_train.py -psi i -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 10 -lr 1e-4 -nmb 100
+    python IRS_simulation/SP_PD_MLP_rician/SP_elbir_ric_train.py -psi d -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 10 -lr 1e-4 -nmb 100
+    python IRS_simulation/SP_PD_MLP_rician/SP_elbir_ric_train.py -psi h -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 10 -lr 1e-4 -nmb 100
 
-# ISTA-Net comparison
+    # ISTA-Net comparison (W/O PENALTY term)
+    python IRS_simulation/SP_PD_MLP_rician/SP_ISTANet_ric_train.py -psi i -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 24 -lr 1e-4 -nmb 100
+    python IRS_simulation/SP_PD_MLP_rician/SP_ISTANet_ric_train.py -psi d -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 100 -lr 1e-4 -nmb 100
+    python IRS_simulation/SP_PD_MLP_rician/SP_ISTANet_ric_train.py -psi h -cuda 2 -nR 4 -nI 8 -nT 4 -T 32 -ep 100 -lr 1e-4 -nmb 100
+
+    ### 
+
+# ISTA-Net training (W/ PENALTY term and mini-batch size 1000, ReduceLROnPlateau 1 patient 0.1lr and 1e-4 threshold) 250222
+python IRS_simulation/SP_PD_MLP_rician/ISTANet_ric_train.py -psi i -cuda 0 -nR 4 -nI 8 -nT 4 -T 32 -ep 2000 -lr 1e-3 -mbs 1000
+-> vMSE 0.155; training time 1:48:35 epoch17
+python IRS_simulation/SP_PD_MLP_rician/ISTANet_ric_train.py -psi d -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 2000 -lr 1e-3 -mbs 1000
+-> vMSE 0.156; training time ~4hr epoch41
+python IRS_simulation/SP_PD_MLP_rician/ISTANet_ric_train.py -psi h -cuda 2 -nR 4 -nI 8 -nT 4 -T 32 -ep 2000 -lr 1e-3 -mbs 1000
+-> vMSE 0.157; training time ~4hr epoch37
+
+# channelNet training (W/O penalty (<1e-8 coef in github), StepLR 3 epoch 0.1lr 5 patients early stop) 250222
+python IRS_simulation/SP_PD_MLP_rician/elbir_ric_train.py -psi i -cuda 0 -nR 4 -nI 8 -nT 4 -T 32 -ep 1000 -lr 1e-2 -mbs 1000
+-> vMSE 0.207; training time 22:46 epoch8
+python IRS_simulation/SP_PD_MLP_rician/elbir_ric_train.py -psi d -cuda 1 -nR 4 -nI 8 -nT 4 -T 32 -ep 1000 -lr 1e-2 -mbs 1000
+-> vMSE 0.197; training time 32:22 epoch11
+python IRS_simulation/SP_PD_MLP_rician/elbir_ric_train.py -psi i -cuda 0 -nR 4 -nI 8 -nT 4 -T 32 -ep 1000 -lr 1e-2 -mbs 1000
+-> vMSE 0.214; training time 22:17 epoch8
+
+### Just validate my code aligns with Natt's code
+python IRS_simulation/SP_PD_MLP_rician/ISTANet_Natt_ric_train.py
+-> 0.012(incorrect vNMSE calculation); training time ~2:19:00 epoch 43

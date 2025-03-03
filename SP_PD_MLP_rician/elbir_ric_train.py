@@ -1,5 +1,5 @@
 import torch
-from torch.optim import Adam
+from torch.optim import SGD
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
@@ -9,84 +9,43 @@ from utils.IRS_rician_channel import importData
 from utils.complex_utils import turnReal, turnCplx, vec
 from utils.NN_model.channelNet import channelNet
 import os
+from torch.optim.lr_scheduler import StepLR
 
 def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3, 
-        num_trajectories = 1e4, num_minibatch = 10, cuda = 1, snr = 0, channel = 'UMa', IRS_coe_type = 'i'):
+        batch_size = 1e4, num_minibatch = 10, cuda = 1, snr = 0, channel = 'UMa', IRS_coe_type = 'i'):
     
     def parametersSave():
     ## save the model and parameters
         checkpoint = {
-            'logits_net': logits_net,
-            'hidden_sizes': hidden_sizes,
-            # 'num_channel': num_channel,
-            # 'filt_size': filt_size,
-            'num_epochs': num_epochs,
-            'train_epochs': train_epochs,
-            'num_minibatch': num_minibatch,
-            'test_size': test_size,
-            'n_R': n_R,
-            'n_T': n_T,
-            'n_I': n_I,
-            'T': T,
-            'lr' : lr,
-            # 'lr_l': lr_l,
-            # 'lr_t': lr_t,
-            # 'H_mean': H_mean,
-            # 'H_sigma' :H_sigma,
-            # 'W_Mean': W_Mean,
-            'SNR_dB': SNR_dB,
-            't_rec': t_rec,
-            # 'lamb_rec': lamb_rec,
-            'iter_loss': iter_loss.reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"),
-            'testing_loss': testing_loss.reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"), 
-            'h_mean': h_mean,
-            'h_std': h_std,
+            'logits_net': best_model,
+            'num_epochs': num_epochs, 'train_epochs': train_epochs, 'num_minibatch': num_minibatch, 'test_size': test_size,
+            'n_R': n_R, 'n_T': n_T, 'n_I': n_I, 'T': T, 'lr' : lr, 'SNR_dB': SNR_dB, 
+            'iter_loss': iter_loss[:train_epochs*num_minibatch].reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"),
+            'testing_loss': testing_loss[:train_epochs*num_minibatch].reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"), 
+            'h_mean': h_mean, 'h_std': h_std,
             'IRS_coe_type': IRS_coe_type
         }
-        # torch.save(checkpoint, './simulation/result/SP_UMa_lr%s_%s_ep%s_SNR%s.pt' %(lr, [2*n_R*T]+hidden_sizes+[2*n_R*n_T+2],train_epochs,SNR_dB.tolist()))
         
-        save_path = os.path.join(script_dir, 'result', '%.3f_SP_ric_elbir_psi_%s_lr%.0e_%s_ep%s.pt' 
-            %(testing_loss[itr-1].item(), IRS_coe_type, lr, [2*n_R*T]+hidden_sizes+[2*n_R*n_T*n_I+2], train_epochs))
-        torch.save(checkpoint, save_path)
+        torch.save(checkpoint, save_path + '.pt')
     
     def NMSEplot(epochs):
         plt.subplot(311)
-        plt.plot(epochs, iter_loss.reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"), label='training nmse')
-        plt.plot(epochs, testing_loss.reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"), label='validation nmse')
+        plt.plot(epochs, iter_loss[:train_epochs*num_minibatch].reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"), label='training NMSE')
+        plt.plot(epochs, testing_loss[:train_epochs*num_minibatch].reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"), label='validation NMSE')
         plt.suptitle("nonparametric PD trained MMSE MIMO ChEst with IRS coefficient %s" %IRS_coe_type)
         plt.title(' $[n_R,n_I,n_T,T]$:[%s,%s,%s,%s], lr:%s, size:%s, SNR:%s~%s' 
                   %(n_R,n_I,n_T,T,lr, [2*n_R*T]+hidden_sizes+[2*n_R*n_T*n_I+2], torch.min(SNR_dB).item(), torch.max(SNR_dB).item()))
         
         plt.xlabel('epochs')
-        # plt.ylabel('mse')
         plt.legend()
         plt.grid(True)
-
-    # def t_MSE_Plot(epochs):
-    #     plt.subplot(312)
-    #     plt.plot(epochs,t_rec.reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"), label='t')
-    #     # plt.plot(epochs,lse.reshape(num_epochs,num_minibatch).mean(dim=1).to("cpu"),label=r'$\|\mathbf{y} - \tilde{\mathbf{X}}\mathbf{h}\|_2^2$')
-    #     plt.xlabel('epochs')
-    #     plt.grid(True)
-    #     plt.legend()
-
-    # def lambPlot(epochs):
-    #     plt.subplot(313)
-    #     plt.plot(epochs,lamb_rec.reshape(train_epochs,num_minibatch).mean(dim=1).to("cpu"),label='$\\lambda$')
-    #     plt.xlabel('epochs')
-    #     plt.grid(True)
-    #     plt.legend()
     
     def lossPlot():
         ## plot the loss
         epochs = range(1, train_epochs+1)
         NMSEplot(epochs)
-        # t_MSE_Plot(epochs)
-        # lambPlot(epochs)
 
-        save_path = os.path.join(script_dir, 'result', '%.3f_SP_ric_elbir_psi_%s_lr%.0e_%s_ep%s.pdf' 
-                    %(testing_loss[itr-1].item(), IRS_coe_type, lr, [2*n_R*T]+hidden_sizes+[2*n_R*n_T*n_I+2], train_epochs))
-        plt.savefig(save_path)
+        plt.savefig(save_path + '.pdf')
         plt.close()
 
     def grad_norm(logits_net):
@@ -95,44 +54,38 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
             gradient_norm += torch.norm(param.grad)**2
         return gradient_norm
     
-    # def termination(logits_net, priFeasibility, lambda_val, epsilon):
-    #     # calculate_norm(y, X_tilde, D, h_tilde) < epsilon or k == num_iterations-1
-    #     gradient_norm = grad_norm(logits_net)
-    #     return gradient_norm <= epsilon and priFeasibility <= 0 and lambda_val.real >= 0 and lambda_val.real*priFeasibility <= epsilon
-    
     device = torch.device("cuda:%s"%(cuda) if torch.cuda.is_available() else "cpu")
     n_T, n_R, n_I, T = size
-    train_size = num_minibatch*num_trajectories
+    train_size = num_minibatch*batch_size
+    print("train_size: ", train_size)
     test_size = 2000
-    SNR_dB = torch.tensor(list(range(min(snr),max(snr)+1,2))).to(device)   ###
+    SNR_dB = torch.tensor(list(range(min(snr),max(snr)+1,2))).to(device)
     SNR_lin = 10**(SNR_dB/10.0)
     print('training with SNR_dB:',SNR_dB)
 
     ## load training and testing data
     h, y, h_mean, h_std = importData(train_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, case = 'train')
     h_test, y_test, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, case = 'test')
+    # rtsqrt = (n_R*T)**0.5
     Y_test_nmlz = (turnCplx(y_test).reshape(test_size, n_T*n_R, T//n_T) - h_mean)/h_std
     print('h_mean:',h_mean, 'h_std:',h_std)
-    # Y_test = (torch.view_as_complex(y_test.reshape(test_size,n_R,T,2))-h_mean)/h_std
-    # c = torch.cat((torch.zeros(n_R*n_T*n_I,1), torch.ones(1,1))).to(torch.complex64).to(device)
-    # D = torch.cat((torch.eye(n_R*n_T*n_I), torch.zeros(n_R*n_T*n_I,1)),1).to(torch.complex64).to(device)
-
-    ## initialize lambda   
-    # lamb = torch.tensor([1.0], requires_grad=True, device=device)
-    # lr_l = 1e-4 #5e-5                                                    ###
-    # epsilon = 1e-16
 
     ## generate MLP ## initialize \tbh
     logits_net = channelNet(n_R, n_I, n_T, T).to(device)
-    optimizer_pri = Adam(logits_net.parameters(), lr=lr)
+    optimizer = SGD(logits_net.parameters(), lr=lr, momentum=0.9)
+    scheduler = StepLR(optimizer, step_size=3, gamma=0.1)
 
     ## initialize the training record
     num_iters = num_epochs*num_minibatch
     iter_loss = torch.zeros(num_iters).to(device)
     testing_loss = torch.zeros(num_iters).to(device)
-    t_rec = torch.zeros(num_iters).to(device)
-    # lamb_rec = torch.zeros(num_iters).to(device)
     train_epochs = 0
+    
+    # Early stopping
+    best_loss = float('inf')  # Initialize the best loss as infinity
+    best_loss_epoch = float('inf')
+    patience = 5
+    epochs_without_improvement = 0
 
     ### training
     pbar = tqdm(total = num_iters)
@@ -145,26 +98,21 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
         for j in range(num_minibatch):
             itr = j+i*num_minibatch+1
             ### trajectories training data
-            tau_Y = turnCplx(y[j*num_trajectories:(j+1)*num_trajectories, :]).reshape(num_trajectories, n_T*n_R, T//n_T)
-            tau_h = h[j*num_trajectories:(j+1)*num_trajectories, :]
+            tau_Y = turnCplx(y[j*batch_size:(j+1)*batch_size, :]).reshape(batch_size, n_T*n_R, T//n_T) ###
+            tau_h = h[j*batch_size:(j+1)*batch_size, :]
             ### feed into the NN
             logits_net.train()
             logits = logits_net(torch.stack([tau_Y.real,tau_Y.imag,tau_Y.abs()],dim=1))
-            # tau_tbh_cplx = turnCplx(logits)
-            # logits = logits_net(turnReal(turnCplx(tau_y)-h_mean)/h_std) # nmlz
-            # tau_tbh_cplx = turnCplx(logits)*h_std + h_mean
             
             ### compute loss and update
-            optimizer_pri.zero_grad()
+            optimizer.zero_grad()
             ## 2-norm square of y - \tbX\D\phi at each realization (size: num_trajectories by 1) 
             norm = torch.norm(tau_h - logits, dim=1)**2
-
-            # lamb_dt = lamb.detach().clone()
 
             ## primal variable theta update
             loss_pri = norm.mean()
             loss_pri.backward()
-            optimizer_pri.step()
+            optimizer.step()
             
             ## dual variable lambda update
             # lamb = lamb + lr_l/itr * torch.mean(norm-c.T.matmul(tau_tbh_cplx.T).real)
@@ -184,32 +132,35 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
                 testing_loss[itr-1] = (norm_test / torch.norm(h_test, dim=1)**2).mean()
                 loss_n4 = (norm_test / torch.norm(h_test, dim=1)**2)[:test_size//len(SNR_dB)//2].mean()
                 loss_10 = (norm_test / torch.norm(h_test, dim=1)**2)[test_size-test_size//len(SNR_dB)//2:].mean()
+                
+                if (testing_loss[itr-1] < best_loss):
+                    best_loss = testing_loss[itr-1].item()
+                    best_model = logits_net
 
-                # t_rec[itr-1] = tau_tbh_cplx[-1].mean().real
-                # lamb_rec[itr-1] = lamb.item()
-            
-            # pbar.set_description('tNMSE:%s, vNMSE:%s, t:%s, l:%s, g:%s' 
-            #         %(format(float(iter_loss[itr-1]), '.3f'), format(float(testing_loss[itr-1]), '.3f'),
-            #           format((t_rec[itr-1]), '5.2f'), format((lamb_rec[itr-1]), '.3f'), format((grad_norm(logits_net)), '.3f')))
             pbar.set_description('tNMSE:%s, vNMSE:%s, -4:%s, 10:%s, g:%s' 
                     %(format(float(iter_loss[itr-1]), '.3f'), format(float(testing_loss[itr-1]), '.3f'),
                       format(10*loss_n4.log10(), '.3f'), format(10*loss_10.log10(), '.3f'), format((grad_norm(logits_net)), '.2e')))
             pbar.update(1)
 
-        # priFeasibility = torch.mean(norm-c.T.matmul(tau_tbh_cplx.T).real)
         train_epochs = i+1
-        # if termination(logits_net, priFeasibility, lamb_rec[itr-1], epsilon):
-        #     # train_epochs = i+1
-        #     iter_loss = iter_loss[0:(i+1)*num_minibatch]#torch.zeros(num_epochs*num_minibatch).to(device)
-        #     testing_loss = testing_loss[0:(i+1)*num_minibatch]
-        #     t_rec = t_rec[0:(i+1)*num_minibatch]
-        #     lamb_rec = lamb_rec[0:(i+1)*num_minibatch]
-        #     break
+        if best_loss < best_loss_epoch:
+            best_loss_epoch = best_loss
+            epochs_without_improvement = 0
+        else:
+            epochs_without_improvement += 1
+            print("epochs_without_improvement: ", epochs_without_improvement)
+        if epochs_without_improvement >= patience:
+            print("Early stopping triggered after %d epochs without improvement" % epochs_without_improvement)
+            break
             
+        scheduler.step()
+
     print('validation loss: ', iter_loss[itr-1].item())
 
     # Get the directory of the running script
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    save_path = os.path.join(script_dir, 'result', '%.3f_SP_ric_elbir_psi_%s_lr%.0e_ep%s' 
+            %(best_loss, IRS_coe_type, lr, train_epochs))
     lossPlot()
     parametersSave()
 
@@ -218,14 +169,14 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-lr', type=float, default=1e-5) # learning rate
+    parser.add_argument('-lr', type=float, default=1e-2) # learning rate
     parser.add_argument('-ep', type=int, default=10)    # num of epochs
-    parser.add_argument('-tau', type=int, default=4)  # 10k length of trajectory = size of mini-batch
-    parser.add_argument('-nmb', type=int, default=10)  # 10 number of mini-batch
+    parser.add_argument('-mbs', type=int, default=1e3)  # size of mini-batch
+    parser.add_argument('-nmb', type=int, default=1)  # number of mini-batch
     parser.add_argument('-nR', type=int, default=4)   
     parser.add_argument('-nI', type=int, default=8)  
-    parser.add_argument('-nT', type=int, default=8)   
-    parser.add_argument('-T', type=int, default=8)
+    parser.add_argument('-nT', type=int, default=4)   
+    parser.add_argument('-T', type=int, default=32)
     parser.add_argument('-hsz', type=int, default=[1], nargs='+')  # hidden layer size
     parser.add_argument('-cuda', type=int, default=0)  # cuda
     parser.add_argument('-snr', type=int, default=[-4,10], nargs='+')  
@@ -239,4 +190,13 @@ if __name__ == '__main__':
 
     torch.manual_seed(0)
     
-    train([args.nT, args.nR, args.nI, args.T], args.hsz, args.lr, args.ep, 10**args.tau, args.nmb, args.cuda, args.snr, args.ch, args.psi)
+    if args.nmb == 1:
+        nmb = int(1e6 // args.mbs)
+    else:
+        nmb = args.nmb
+    print("num of mini-batch: ", nmb, "mini-batch size: ", args.mbs)
+
+    # product = args.nR * args.T
+    # assert int(product ** 0.5) ** 2 == product, "n_R * T must be a perfect square!"
+    
+    train([args.nT, args.nR, args.nI, args.T], args.hsz, args.lr, args.ep, args.mbs, nmb, args.cuda, args.snr, args.ch, args.psi)
