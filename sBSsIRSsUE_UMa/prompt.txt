@@ -1,0 +1,9 @@
+python IRS_simulation/sBSsIRSsUE_UMa/SP_PD_MLP_ct_train.py -lr 1e-4 -psi i -ch 'uma' -ep 100
+python IRS_simulation/sBSsIRSsUE_UMa/SP_PD_MLP_ct_train.py -lr 1e-4 -psi d -ch 'uma' -ep 13 -cuda 1
+python IRS_simulation/sBSsIRSsUE_UMa/SP_PD_MLP_ct_train.py -lr 1e-4 -psi h -ch 'uma' -ep 13 -cuda 2
+
+### ISTA-Net training
+python IRS_simulation/sBSsIRSsUE_UMa/ISTANet_ct_train.py -lr 1e-3 -psi i -ch 'uma' -ep 1000 -mbs 1000 -cuda 0
+python IRS_simulation/sBSsIRSsUE_UMa/ISTANet_ct_train.py -lr 1e-3 -psi i -ch 'uma' -ep 1000 -mbs 1000 -cuda 1
+python IRS_simulation/sBSsIRSsUE_UMa/ISTANet_ct_train.py -lr 1e-3 -psi i -ch 'uma' -ep 1000 -mbs 1000 -cuda 2
+
