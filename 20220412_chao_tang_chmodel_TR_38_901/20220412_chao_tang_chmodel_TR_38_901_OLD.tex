@@ -1,0 +1,172 @@
+\documentclass{beamer}
+
+\def\comment#1{}
+
+\mode<presentation> {
+\usetheme{Madrid}
+}
+
+%\usepackage{xcolor}
+\definecolor{DarkGreen}{RGB}{0,100,0}
+\usecolortheme[rgb={0.0,0.4,0.0}]{structure}
+\setbeamercolor{titlelike}{parent=structure,bg=gray!10}
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{graphicx,epsfig,amsfonts,amsmath,amssymb,mathrsfs,color,enumerate,empheq,mathdots}
+\usepackage{lipsum}
+\usepackage{comment}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{array}
+\usetikzlibrary{shapes,arrows}
+\usepackage[justification=centering]{caption}
+%\usepackage[normalem]{ulem}
+\usepackage{etex}
+%\usepackage{bm}
+%\usepackage[demo]{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\graphicspath{{fig/}}
+\usepackage{placeins}
+\usepackage[vlined,ruled]{algorithm2e}
+\usepackage{floatrow}
+%\usepackage{movie15}
+\usepackage{animate}
+\usepackage{epstopdf}
+\epstopdfDeclareGraphicsRule
+  {.gif}{png}{.png}{convert gif:\SourceFile.\SourceExt png:\OutputFile}
+\AppendGraphicsExtensions{.gif}
+
+\DeclareSymbolFont{grb}{OML}{cmm}{b}{it}
+\DeclareMathSymbol{\zetab}{\mathord}{grb}{"10}
+\DeclareMathSymbol{\etab}{\mathord}{grb}{"11}
+\DeclareMathSymbol{\thetab}{\mathord}{grb}{"12}
+\DeclareMathSymbol{\kappab}{\mathord}{grb}{"14}
+\DeclareMathSymbol{\lambdab}{\mathord}{grb}{"15}
+\DeclareMathSymbol{\mub}{\mathord}{grb}{"16}
+\DeclareMathSymbol{\nub}{\mathord}{grb}{"17}
+\DeclareMathSymbol{\rhob}{\mathord}{grb}{"1A}
+\DeclareMathSymbol{\sigmab}{\mathord}{grb}{"1B}
+\DeclareMathSymbol{\taub}{\mathord}{grb}{"1C}
+\DeclareMathSymbol{\phib}{\mathord}{grb}{"1E}
+\DeclareMathSymbol{\psib}{\mathord}{grb}{"20}
+\DeclareMathSymbol{\omegab}{\mathord}{grb}{"21}
+\DeclareMathSymbol{\epsilonb}{\mathord}{grb}{"22}
+\DeclareMathSymbol{\varphib}{\mathord}{grb}{"27}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\input{Symbol_Shortcut.tex}
+
+\usefonttheme{serif}
+\usepackage{background}
+\renewcommand{\footnotesize}{\scriptsize}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+%	SLIDE1
+\title[NYCU]{Channel Generation (TR 38.901)}   % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Tang Chao} % Your name
+\institute[] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+\textit{sisy710.ee04@g2.nctu.edu.tw} % Your email address
+\\
+%\medskip
+%Advisor: Professor Carrson C. Fung\\ 
+\medskip
+National Yang Ming Chiao Tung University\\ % Your institution for the title page
+}
+\date{April 12, 2022 } % Date, can be changed to a custom date
+
+\AtBeginSection[]
+{
+  %\begin{frame}<beamer>
+    %\frametitle{Outline} %\insertsectionhead
+    %\tableofcontents[currentsection]
+  %\end{frame}
+}
+\setbeamertemplate{frametitle continuation}{(\insertcontinuationcount)}
+
+
+\logo{\vspace{7.8cm} \includegraphics[width=1cm]{fig/nctu_logo.png}
+}
+
+%\logo{\includegraphics[height=1cm]{nctu_logo.png}\vspace{220pt}}
+
+\usepackage{textpos}
+\addtobeamertemplate{frametitle}{}{%
+\begin{textblock*}{100mm}(0.953\textwidth,-0.93cm)
+\includegraphics[height=0.9cm]{fig/nctu_logo.png}
+\end{textblock*}}
+
+\setbeamertemplate{navigation symbols}{}
+
+\begin{document}
+%============================================================================================
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+\logo{}
+
+%============================================================================================
+\section{Channel Generation}
+\begin{frame}[allowframebreaks]{Channel Generation Steps}
+Fast fading model from TR 38.901 Sec. 7.5. The red text indicates modifications by me. 
+\begin{itemize}
+\item General parameters.
+\begin{itemize}
+
+    \item Set scenario, network layout, and antenna parameters. \textcolor{red}{Disregard antenna patterns}
+    \item Assign propagation condition (LOS/NLOS). \textcolor{red}{All devices are set outside. All AP-IRS links are LOS.}
+    \item Calculate pathloss.
+    \item Generate correlated large-scale parameters(LCPs): delay spread(DS), angular spread(AS), shadow fading(SF), K-factor(K), and XPR related parameters.
+    \begin{itemize}
+        \item LCPs are random variables. Once generated, they are used to generate other stochastic parameters (small-scale parameters such as AoA/AoDs).
+        \item The cross-correlation between UTs served by the same BS is also considered by applying 2D LTI filters to the generated numbers.
+    \end{itemize}
+\end{itemize}
+\framebreak
+\item Small scale parameters.
+\begin{itemize}
+
+    \item Generate delays for each cluster with exponential delay distribution using DS and K.
+    \item Generate Cluster Powers $P_n$ with delays and DS. (modeled as a single slope exponential power delay profile.)
+    \item Generate arrival and departure angles for each ray (AOA, AOD, ZOA, ZOD). 
+    \begin{itemize}
+        \item The composite power angular spectrum(PAS) is modeled as wrapped Gaussian in the azimuth and Laplacian in the zenith. The corresponding angles od each cluster are generated using inverse functions with the power of each cluster as input.
+        \item The angles of each ray are then generated by adding a Gaussian noise to the cluster AoA/AoDs. The variance of the noise depends on the AS of the cluster.
+    \end{itemize}  
+    \item Perform random coupling of rays.
+    \item Generate cross polarization power ratios (XPRs).
+\end{itemize}
+\framebreak
+\item Channel coefficient generation
+\begin{itemize}
+    \item Draw random initial phases, for example LOS\_AOA, LOS\_ASA, ...
+    \item Generate channel coefficient (impulse response).
+    \begin{itemize}
+        \item The 2 strongest clusters are spread in delay to 3 sub-clusters with fixed delay offset and power distribution.
+        \item NLOS and LOS components are combined at this stage if applicable.
+    \end{itemize}
+    \item Apply pathloss and shadowing.
+\end{itemize}
+
+\end{itemize}
+\end{frame}
+%===========================================================================================
+\begin{frame}{Next Steps}
+    \begin{itemize}
+        \item Adapt the model's more realistic AoA/AoD (of rays) generation procedure, but disregard delay and use the original equation to generate the flat channel matrix.
+        \item$$\H =  \sum_n \sum_m\sqrt{\frac{P_n}{M}} exp(-j\Phi)\a_{Rx}\a_{Tx}^H$$
+        where $\Phi$ is the random phase shift of each ray and $\a$ is the steering vector and depends on AoA/AoDs.
+        \item Keep the original way of applying pathloss and shadowing. i.e. they are applied separately to the LOS/NLOS component of the channel.
+    \end{itemize}
+\end{frame}
+
+
+%============================================================================================
+
+
+\end{document} 

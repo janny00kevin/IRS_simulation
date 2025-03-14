@@ -1,0 +1,249 @@
+\documentclass{beamer}
+
+\def\comment#1{}
+
+\mode<presentation> {
+\usetheme{Madrid}
+}
+
+%\usepackage{xcolor}
+\definecolor{DarkGreen}{RGB}{0,100,0}
+\usecolortheme[rgb={0.0,0.4,0.0}]{structure}
+\setbeamercolor{titlelike}{parent=structure,bg=gray!10}
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{graphicx,epsfig,amsfonts,amsmath,amssymb,mathrsfs,color,enumerate,empheq,mathdots}
+\usepackage{lipsum}
+\usepackage{comment}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{array}
+\usetikzlibrary{shapes,arrows}
+\usepackage[justification=centering]{caption}
+%\usepackage[normalem]{ulem}
+\usepackage{etex}
+%\usepackage{bm}
+%\usepackage[demo]{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\graphicspath{{fig/}}
+\usepackage{placeins}
+\usepackage[vlined,ruled]{algorithm2e}
+\usepackage{floatrow}
+%\usepackage{movie15}
+\usepackage{animate}
+\usepackage{epstopdf}
+\epstopdfDeclareGraphicsRule
+  {.gif}{png}{.png}{convert gif:\SourceFile.\SourceExt png:\OutputFile}
+\AppendGraphicsExtensions{.gif}
+
+\DeclareSymbolFont{grb}{OML}{cmm}{b}{it}
+\DeclareMathSymbol{\zetab}{\mathord}{grb}{"10}
+\DeclareMathSymbol{\etab}{\mathord}{grb}{"11}
+\DeclareMathSymbol{\thetab}{\mathord}{grb}{"12}
+\DeclareMathSymbol{\kappab}{\mathord}{grb}{"14}
+\DeclareMathSymbol{\lambdab}{\mathord}{grb}{"15}
+\DeclareMathSymbol{\mub}{\mathord}{grb}{"16}
+\DeclareMathSymbol{\nub}{\mathord}{grb}{"17}
+\DeclareMathSymbol{\rhob}{\mathord}{grb}{"1A}
+\DeclareMathSymbol{\sigmab}{\mathord}{grb}{"1B}
+\DeclareMathSymbol{\taub}{\mathord}{grb}{"1C}
+\DeclareMathSymbol{\phib}{\mathord}{grb}{"1E}
+\DeclareMathSymbol{\psib}{\mathord}{grb}{"20}
+\DeclareMathSymbol{\omegab}{\mathord}{grb}{"21}
+\DeclareMathSymbol{\epsilonb}{\mathord}{grb}{"22}
+\DeclareMathSymbol{\varphib}{\mathord}{grb}{"27}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\input{Symbol_Shortcut.tex}
+
+\usefonttheme{serif}
+\usepackage{background}
+\renewcommand{\footnotesize}{\scriptsize}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+%	SLIDE1
+\title[NYCU]{Channel Generation (TR 38.901)}   % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Tang Chao} % Your name
+\institute[] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+\textit{sisy710.ee04@g2.nctu.edu.tw} % Your email address
+\\
+%\medskip
+%Advisor: Professor Carrson C. Fung\\ 
+\medskip
+National Yang Ming Chiao Tung University\\ % Your institution for the title page
+}
+\date{April 12, 2022 } % Date, can be changed to a custom date
+
+\AtBeginSection[]
+{
+  %\begin{frame}<beamer>
+    %\frametitle{Outline} %\insertsectionhead
+    %\tableofcontents[currentsection]
+  %\end{frame}
+}
+\setbeamertemplate{frametitle continuation}{(\insertcontinuationcount)}
+
+
+\logo{\vspace{7.8cm} \includegraphics[width=1cm]{fig/nctu_logo.png}
+}
+
+%\logo{\includegraphics[height=1cm]{nctu_logo.png}\vspace{220pt}}
+
+\usepackage{textpos}
+\addtobeamertemplate{frametitle}{}{%
+\begin{textblock*}{100mm}(0.953\textwidth,-0.93cm)
+\includegraphics[height=0.9cm]{fig/nctu_logo.png}
+\end{textblock*}}
+
+\setbeamertemplate{navigation symbols}{}
+
+\begin{document}
+%============================================================================================
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+\logo{}
+
+%============================================================================================
+\section{Channel Generation}
+\begin{frame}[allowframebreaks]{Channel Generation Steps}
+Fast fading model from TR 38.901 Sec. 7.5.  The following steps follow the Fig. 7.5-1 in the document. The red text indicates modifications by me. \textcolor{green}{Input}/\textcolor{blue}{Output} of each step.
+\begin{itemize}
+\item General parameters.
+\begin{itemize}
+
+    \item Set scenario, network layout, and antenna parameters. \textcolor{red}{Disregard antenna patterns}
+    \item Assign propagation condition (LOS/NLOS). \textcolor{red}{All devices are set outside. All AP-IRS links are LOS.}
+    \item Calculate \textcolor{blue}{pathloss}.
+    \item Generate correlated \textcolor{blue}{large-scale parameters(LCPs)}: delay spread(DS), angular spread(AS), shadow fading(SF), K-factor(K), and XPR related parameters. They mostly depends on the \textcolor{green}{carrier/central frequency}.
+    \begin{itemize}
+        \item LCPs are random variables. Once generated, they are used to generate other stochastic parameters (small-scale parameters such as AoA/AoDs).
+        \item The cross-correlation between UTs served by the same BS is also considered by applying 2D LTI filters to the generated numbers.
+    \end{itemize}
+\end{itemize}
+\framebreak
+\item Small scale parameters.
+\begin{itemize}
+
+    \item Generate \textcolor{blue}{delays} for each cluster with exponential delay distribution using \textcolor{green}{DS and K}.
+    \item Generate \textcolor{blue}{Cluster Powers $P_n$} with \textcolor{green}{delays and DS}. (modeled as a single slope exponential power delay profile.)
+    \item Generate the mean arrival and departure angles for each cluster (AOA, AOD, ZOA, ZOD) using the following method. 
+    \begin{itemize}
+        \item First, \textcolor{blue}{the LOS direction} of each cluster is calculated according to \textcolor{green}{the positions of BSs and UTs (UEs)}.
+        \item For each cluster, the angles are calculated by adding an offset to the LOS directions. The offset include two components:
+        \item[1] \textcolor{blue}{Deterministic component}: The composite power angular spectrum(PAS) is modeled as wrapped Gaussian in the azimuth and Laplacian in the zenith. The corresponding angle offsets of each cluster are generated using inverse functions with \textcolor{green}{the power of each cluster as input.}
+        \item[2] \textcolor{blue}{Stochastic component}: A Gaussian random variable determined by \textcolor{green}{AS}.
+        \item In summary: The \textcolor{blue}{angles of each cluster} are generated with \textcolor{green}{LOS direction, the cluster power, and AS}.
+    \end{itemize}  
+    \item \textcolor{blue}{The angles of each ray/path} are then generated by adding a Gaussian noise to the \textcolor{green}{cluster AoA/AoDs}. The variance of the noise depends on \textcolor{green}{the cluster AS}, which is different from AS and only depend on the scenario.
+    \item Perform random coupling of rays.
+    \item Generate cross polarization power ratios (XPRs).
+\end{itemize}
+\framebreak
+\item Channel coefficient generation
+\begin{itemize}
+    \item Draw random initial phases, $\Phi$, which would later be applied to each ray.
+    \item Generate channel coefficient (impulse response).
+    \begin{itemize}
+        \item The 2 strongest clusters are spread in delay to 3 sub-clusters with fixed delay offset and power distribution.
+        \item For example, ray/path 1-6 will belong to subcluster 1, 7-12, will belong subcluster 2, and 13-20 will belong to subcluster 3
+        \item NLOS and LOS components are combined at this stage if applicable.
+    \end{itemize}
+    \item Apply pathloss and shadowing.
+\end{itemize}
+
+\end{itemize}
+\end{frame}
+%===========================================================================================
+\begin{frame}{Next Steps}
+    \begin{itemize}
+        \item Adapt the model's more realistic AoA/AoD (of rays) generation procedure, but disregard delay and use the original equation to generate the flat channel matrix.
+        \item $$\H =  \sum_n \sum_m\sqrt{\frac{P_n}{M}} exp(-j\Phi)\a_{Rx}\a_{Tx}^H$$
+        where $\Phi$ is the random phase shift of each ray and $\a$ is the steering vector and depends on AoA/AoDs.
+        \item Keep the original way of applying pathloss and shadowing. i.e. they are applied separately to the LOS/NLOS component of the channel.
+    \end{itemize}
+\end{frame}
+
+
+%============================================================================================
+
+\begin{frame}[allowframebreaks]{Carrson's own summary}
+
+On p. 2 \\
+\begin{itemize}
+	\item Note that the path loss model for outdoor and indoor are different
+	\item If AP is outdoor and UEs are indoor, then we will need to have 2 pathloss models: one for outdoor and the other for indoor
+	\begin{itemize}
+		\item In that case, we also need to know which area is indoor and which is outdoor (i.e. how long are the indoor and outdoor distances
+	\end{itemize}
+	\item The current indoor path loss model is linear, instead of piecewise linear (this was used in an first version of our paper)
+	\item Chao Tang simulated the delay spread (DS) because it is a parameter to generate the delay for each cluster that would allow one to calculate the cluster power.  If our model needs to model frequency-selective channels, then this delay spread will be used elsewhere in the model as well
+\end{itemize}
+
+p. 3 \\
+\begin{itemize}
+	\item CT generated delay for each cluster based on the delay spread on p. 2 and also $\kappa$ ($K$  on p. 3).  This is the minimum delay for all rays/paths of each cluster
+	\begin{itemize}
+		\item This is needed to calculate the cluster power
+	\end{itemize}
+	\item The AOA, AOD, ZOA (zenith-angle-of-arrival) and ZOD refer to the AOA/ZOA at the UE and AOD/ZOD at the AP
+	\item The LOS direction pertains to each cluster, i.e. cluster 1, which only has 1 path
+	\begin{itemize}
+		\item the LOS direction is determined by the location of the AP and UE, and the orientation of the AP and UE (only matters if it's UPA)
+		\item When we are talking about the NLOS component of the channel, then cluster 1 will no longer be the LOS direction, and it will only have 1 ray/path
+		\item The other cluster has 20 paths.  This number is based on the different scenarios (e.g. urban micro)
+		\item Even if we are talking about the NLOS component of the channel, then cluster 1 also will have 20 paths.  However, even in this case, the LOS direction can still be computed even though it is blocked
+	\end{itemize}
+
+	\item Next step, calculate the cluster mean AOA, mean AOD, mean ZOA, mean ZOD for each cluster, where this mean is the mean angle of all 20 paths, based on the following:
+	\begin{itemize}
+		\item PAS refers is a power distribution w.r.t. each angle.  So this is used to generate the deterministic offset from the LOS direction which will form the mean angles for each cluster.  The (deterministic part of the) offset is drawn from the PAS (the distribution)
+		\item The stochastic part of the offset is determined by a zero-mean Gaussian distribution with AS as the variance
+		\begin{itemize}
+			\item The AS is given by the scenario and the carrier frequency
+		\end{itemize}
+		\item The offset is the sum between the deterministic part and the stochastic part
+		\item The LoS direction + offset = the mean angles (4 of them) for each cluster.
+		\begin{itemize}
+			\item Even if we are talking NLOS channel, there is still going to be a LOS direction as stated above
+		\end{itemize}
+	\end{itemize}
+\end{itemize}
+
+p. 4 \\
+\begin{itemize}
+	\item the angles of each path (4 angles) are generated by a  zero-mean Gaussian distribution with ``cluster AS'' as variance.  The cluster AS is different from the AS on p. 3.  The cluster AS is also given by the scenario
+	\item Each cluster has 20 AoAs, AoDs, ZoDs, ZoAs, so the coupling is to match each AoA to each AoD, and each ZoA to each ZoD
+\end{itemize}
+
+
+p. 5 \\
+\begin{itemize}
+	\item The initial phases are determined by uniform distribution $(0,2\pi)$
+	\item 2 strong clusters, which means clusters with the highest power, are further separated into 3 subclusters (so there will be 6 subclusters)
+	\item Due to this, the number of clusters becomes 18 (clusters) + 6 subclusters = 24 ``clusters''.  Each cluster is assigned a different delay (that will be used in the CDL model).  See Sec. 7.7 in 2020\_11\_3GPP\_TR\_38\_901v16\_1\_0.pdf called ``Channel Models for Link Evaluation''
+	\item According to CT, the CDL (and TDL) models are simplified version what the models that she has implemented
+	\begin{itemize}
+		\item Note that each 24 ``clusters'' will still be assigned 20 rays/paths
+	\end{itemize}
+\end{itemize}
+
+
+p. 6 \\
+\begin{itemize}
+	\item $n = 1$: $N_c$ (index for cluster)
+	\item $m = 1:M=20$  (index for paths)
+	\item $\Phi$ refers to the initial phase on p. 5
+	\item $P_n$ = $n$th cluster power 
+\end{itemize}
+
+
+\end{frame}
+
+\end{document} 
