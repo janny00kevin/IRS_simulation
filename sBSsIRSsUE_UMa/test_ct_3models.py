@@ -16,7 +16,7 @@ import os
 
 torch.manual_seed(0)
 
-device = torch.device("cuda:0")
+device = torch.device("cuda:2")
 device1 = torch.device("cuda:1")
 script_dir = os.path.dirname(os.path.abspath(__file__))
 n_T = 4
@@ -25,20 +25,20 @@ n_R = 4
 T = 32
 
 # MLPs
-filename1 = os.path.join(script_dir, 'trained_model', '1.090_SP_uma_MLP_psi_i_lr1e-04_[256, 1, 258]_ep100.pt')
+filename1 = os.path.join(script_dir, 'trained_model', '0.970_SP_uma_MLP_psi_i_lr1e-03_[256, 1024, 258]_ep115.pt')
 checkpoint1 = torch.load(filename1, weights_only=False)
-filename2 = os.path.join(script_dir, 'trained_model', '1.119_SP_uma_MLP_psi_d_lr1e-04_[256, 1, 258]_ep13.pt')
+filename2 = os.path.join(script_dir, 'trained_model', '0.921_SP_uma_MLP_psi_d_lr1e-03_[256, 1024, 258]_ep71.pt')
 checkpoint2 = torch.load(filename2, weights_only=False)
-filename3 = os.path.join(script_dir, 'trained_model', '1.193_SP_uma_MLP_psi_h_lr1e-04_[256, 1, 258]_ep13.pt')
+filename3 = os.path.join(script_dir, 'trained_model', '0.954_SP_uma_MLP_psi_h_lr1e-03_[256, 1024, 258]_ep103.pt')
 checkpoint3 = torch.load(filename3, weights_only=False)
 
-# # channelNets
-# filename4 = os.path.join(script_dir, 'result', '0.207_SP_ric_elbir_psi_i_lr1e-02_ep8.pt')
-# checkpoint4 = torch.load(filename4, weights_only=False, map_location=device)
-# filename5 = os.path.join(script_dir, 'result', '0.197_SP_ric_elbir_psi_d_lr1e-02_ep11.pt')
-# checkpoint5 = torch.load(filename5, weights_only=False, map_location=device)
-# filename6 = os.path.join(script_dir, 'result', '0.214_SP_ric_elbir_psi_h_lr1e-02_ep8.pt')
-# checkpoint6 = torch.load(filename6, weights_only=False, map_location=device)
+# channelNets
+filename4 = os.path.join(script_dir, 'trained_model', '0.631_SP_rt_elbir_psi_i_lr1e-04_ep32.pt')
+checkpoint4 = torch.load(filename4, weights_only=False, map_location=device)
+filename5 = os.path.join(script_dir, 'trained_model', '0.740_SP_rt_elbir_psi_d_lr1e-04_ep14.pt')
+checkpoint5 = torch.load(filename5, weights_only=False, map_location=device)
+filename6 = os.path.join(script_dir, 'trained_model', '0.652_SP_rt_elbir_psi_h_lr1e-04_ep20.pt')
+checkpoint6 = torch.load(filename6, weights_only=False, map_location=device)
 
 # ISTA-Nets
 filename7 = os.path.join(script_dir, 'trained_model', '0.649_SP_uma_ISTA_psi_i_lr1e-03_ep35.pt')
@@ -53,26 +53,13 @@ logits_net1 = checkpoint1['logits_net'].to(device)
 logits_net2 = checkpoint2['logits_net'].to(device)
 logits_net3 = checkpoint3['logits_net'].to(device) 
 
-# logits_net4 = checkpoint4['logits_net'].to(device)
-# logits_net5 = checkpoint5['logits_net'].to(device)
-# logits_net6 = checkpoint6['logits_net'].to(device) 
+logits_net4 = checkpoint4['logits_net'].to(device)
+logits_net5 = checkpoint5['logits_net'].to(device)
+logits_net6 = checkpoint6['logits_net'].to(device) 
 
 logits_net7 = checkpoint7['logits_net'].to('cuda:0')
 logits_net8 = checkpoint8['logits_net'].to('cuda:1') 
 logits_net9 = checkpoint9['logits_net'].to('cuda:2')
-
-# logits_net7 = ISTANet(5, device1, n_R, n_I, n_T, T)
-# logits_net8 = ISTANet(5, device1, n_R, n_I, n_T, T)
-# logits_net9 = ISTANet(5, device1, n_R, n_I, n_T, T)
-
-# logits_net7.load_state_dict(checkpoint7['logits_net'])
-# logits_net8.load_state_dict(checkpoint8['logits_net'])
-# logits_net9.load_state_dict(checkpoint9['logits_net'])
-
-# logits_net7 = logits_net7.to(device1)
-# logits_net8 = logits_net8.to(device1)
-# logits_net9 = logits_net9.to(device1)
-
 
 sqrt2 = 2**.5
 SNR_dB = torch.arange(-4,10.1,2)
@@ -80,9 +67,9 @@ SNR_lin = 10**(SNR_dB/10.0).to(device)
 NMSE_1 = torch.zeros_like(SNR_lin) # MLP 1
 NMSE_2 = torch.zeros_like(SNR_lin) # MLP 2
 NMSE_3 = torch.zeros_like(SNR_lin)
-# NMSE_4 = torch.zeros_like(SNR_lin) # channelNet
-# NMSE_5 = torch.zeros_like(SNR_lin) 
-# NMSE_6 = torch.zeros_like(SNR_lin)
+NMSE_4 = torch.zeros_like(SNR_lin) # channelNet
+NMSE_5 = torch.zeros_like(SNR_lin) 
+NMSE_6 = torch.zeros_like(SNR_lin)
 NMSE_7 = torch.zeros_like(SNR_lin) # ISTA-Net 
 NMSE_8 = torch.zeros_like(SNR_lin) 
 NMSE_9 = torch.zeros_like(SNR_lin)
@@ -97,33 +84,9 @@ NMSE_LM_h = torch.zeros_like(SNR_lin) # sampled LMMSE
 test_size = int(2.4e4)
 datasize_per_SNR = test_size//len(SNR_lin)
 test_data_size = datasize_per_SNR*len(SNR_dB)
-# n_R = checkpoint1['n_R']
-# n_T = checkpoint1['n_T']
-# T = checkpoint1['T']
-# n_I = checkpoint1['n_I']
 
-
-# file_path = './simulation/channel_realization/testing_dataset_UMa28.mat'
-# with h5py.File(file_path, 'r') as f:
-#     h = torch.tensor(f['GroundChan'][:]).T.to(device)
-# data_size = h.size(0)
-# h = torch.complex(h[:,:144],h[:,144:]).to(torch.complex64)
-# h = h
-# n_R, n_T, T = 4, 36, 36
-# rnd_sample = 1
-
-
-# X = torch.complex(torch.eye(n_T).tile(T//n_T), torch.zeros(n_T, T)).to(device)
-# X_tild = torch.complex(torch.eye(n_R*n_T), torch.zeros(n_R*n_T, n_R*n_T)).to(device)
-# s = h #@ X_tild 
-# print("Ps",Ps.shape)
-
-# H = torch.view_as_complex(torch.normal(H_mean, H_sigma, size=(data_size, n_R, n_T, 2))/(sqrt2)).to(device)
-# Ph = (H.abs()**2).mean()
-# print(Ph)
-
-channel = 'uma'
 ### import testing data ###
+channel = 'uma'
 h_test, y_test_i, h_mean, h_std = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef='i', case = 'test', channel=channel)
 _, y_test_d, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef='d', case = 'test', channel=channel)
 _, y_test_h, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef='h', case = 'test', channel=channel)
@@ -131,9 +94,9 @@ h_test = h_test.reshape(len(SNR_lin), datasize_per_SNR, n_R*n_T*n_I*2)
 y_test_i = y_test_i.reshape(len(SNR_lin), datasize_per_SNR, n_R*T*2)
 y_test_h = y_test_h.reshape(len(SNR_lin), datasize_per_SNR, n_R*T*2)
 y_test_d = y_test_d.reshape(len(SNR_lin), datasize_per_SNR, n_R*T*2)
-# Y_test_nmlz_i = (torch.view_as_complex(y_test_i.reshape(len(SNR_lin), datasize_per_SNR, n_T*n_R, T//n_T, 2)) - h_mean)/h_std
-# Y_test_nmlz_d = (torch.view_as_complex(y_test_d.reshape(len(SNR_lin), datasize_per_SNR, n_T*n_R, T//n_T, 2)) - h_mean)/h_std
-# Y_test_nmlz_h = (torch.view_as_complex(y_test_h.reshape(len(SNR_lin), datasize_per_SNR, n_T*n_R, T//n_T, 2)) - h_mean)/h_std
+Y_test_nmlz_i = (torch.view_as_complex(y_test_i.reshape(len(SNR_lin), datasize_per_SNR, n_T*n_R, T//n_T, 2)) - h_mean)/h_std
+Y_test_nmlz_d = (torch.view_as_complex(y_test_d.reshape(len(SNR_lin), datasize_per_SNR, n_T*n_R, T//n_T, 2)) - h_mean)/h_std
+Y_test_nmlz_h = (torch.view_as_complex(y_test_h.reshape(len(SNR_lin), datasize_per_SNR, n_T*n_R, T//n_T, 2)) - h_mean)/h_std
 
 
 def LS_LMMSE(device, datasize_per_SNR, n_R, n_T, T, n_I, snr, h_test, y_test, IRS_coef_type):
@@ -194,18 +157,18 @@ for idx, snr in enumerate(SNR_lin):
         test_tbh_cplx = turnCplx(logits3)*h_std + h_mean
         norm_3 = torch.norm(turnCplx(h_test[idx]) - D.matmul(test_tbh_cplx.T).T, dim=1)**2
 
-        # ### channelNet
-        # logits4 = logits_net4(torch.stack([Y_test_nmlz_i[idx].real,Y_test_nmlz_i[idx].imag,Y_test_nmlz_i[idx].abs()],dim=1))
-        # test_tbh_cplx = turnCplx(logits4)*h_std + h_mean
-        # norm_4 = torch.norm(turnCplx(h_test[idx]) - test_tbh_cplx, dim=1)**2
+        ### channelNet
+        logits4 = logits_net4(torch.stack([Y_test_nmlz_i[idx].real,Y_test_nmlz_i[idx].imag,Y_test_nmlz_i[idx].abs()],dim=1))
+        test_tbh_cplx = turnCplx(logits4)*h_std + h_mean
+        norm_4 = torch.norm(turnCplx(h_test[idx]) - test_tbh_cplx, dim=1)**2
         
-        # logits5 = logits_net5(torch.stack([Y_test_nmlz_d[idx].real,Y_test_nmlz_d[idx].imag,Y_test_nmlz_d[idx].abs()],dim=1))
-        # test_tbh_cplx = turnCplx(logits5)*h_std + h_mean
-        # norm_5 = torch.norm(turnCplx(h_test[idx]) - test_tbh_cplx, dim=1)**2
+        logits5 = logits_net5(torch.stack([Y_test_nmlz_d[idx].real,Y_test_nmlz_d[idx].imag,Y_test_nmlz_d[idx].abs()],dim=1))
+        test_tbh_cplx = turnCplx(logits5)*h_std + h_mean
+        norm_5 = torch.norm(turnCplx(h_test[idx]) - test_tbh_cplx, dim=1)**2
         
-        # logits6 = logits_net6(torch.stack([Y_test_nmlz_h[idx].real,Y_test_nmlz_h[idx].imag,Y_test_nmlz_h[idx].abs()],dim=1))
-        # test_tbh_cplx = turnCplx(logits6)*h_std + h_mean
-        # norm_6 = torch.norm(turnCplx(h_test[idx]) - test_tbh_cplx, dim=1)**2
+        logits6 = logits_net6(torch.stack([Y_test_nmlz_h[idx].real,Y_test_nmlz_h[idx].imag,Y_test_nmlz_h[idx].abs()],dim=1))
+        test_tbh_cplx = turnCplx(logits6)*h_std + h_mean
+        norm_6 = torch.norm(turnCplx(h_test[idx]) - test_tbh_cplx, dim=1)**2
 
         ### ISTA-Net
         # torch.cuda.empty_cache()
@@ -240,9 +203,9 @@ for idx, snr in enumerate(SNR_lin):
         NMSE_1[idx] = 10*torch.log10((norm_1 / torch.norm(h_test[idx], dim=1)**2).mean())
         NMSE_2[idx] = 10*torch.log10((norm_2 / torch.norm(h_test[idx], dim=1)**2).mean())
         NMSE_3[idx] = 10*torch.log10((norm_3 / torch.norm(h_test[idx], dim=1)**2).mean())
-        # NMSE_4[idx] = 10*torch.log10((norm_4 / torch.norm(h_test[idx], dim=1)**2).mean())
-        # NMSE_5[idx] = 10*torch.log10((norm_5 / torch.norm(h_test[idx], dim=1)**2).mean())
-        # NMSE_6[idx] = 10*torch.log10((norm_6 / torch.norm(h_test[idx], dim=1)**2).mean())
+        NMSE_4[idx] = 10*torch.log10((norm_4 / torch.norm(h_test[idx], dim=1)**2).mean())
+        NMSE_5[idx] = 10*torch.log10((norm_5 / torch.norm(h_test[idx], dim=1)**2).mean())
+        NMSE_6[idx] = 10*torch.log10((norm_6 / torch.norm(h_test[idx], dim=1)**2).mean())
         NMSE_7[idx] = 10*torch.log10((norm_7 / torch.norm(h_test[idx], dim=1)**2).mean())
         NMSE_8[idx] = 10*torch.log10((norm_8 / torch.norm(h_test[idx], dim=1)**2).mean())
         NMSE_9[idx] = 10*torch.log10((norm_9 / torch.norm(h_test[idx], dim=1)**2).mean())
@@ -270,9 +233,9 @@ plt.plot(SNR_dB, NMSE_LM_h.to('cpu'), label='LMMSE w/ H', linewidth=1, linestyle
 # plt.plot(SNR_dB, NMSE5,'-x', label='model-based PD LS', linewidth=1 ,color="tab:red")
 # plt.plot(epochs, testing_loss_N.reshape(num_epochs,num_minibatch).mean(dim=1).to("cpu"), label='validation loss')
 
-# plt.plot(SNR_dB, NMSE_4.to('cpu'), label='channelNet w/ I ', linewidth=1, linestyle='--', marker='x', color="tab:green")  ###
-# plt.plot(SNR_dB, NMSE_5.to('cpu'), label='channelNet w/ D ', linewidth=1, linestyle=':', marker='x', color="tab:green")  ###
-# plt.plot(SNR_dB, NMSE_6.to('cpu'), label='channelNet w/ H ', linewidth=1, linestyle='-', marker='x', color="tab:green")  ###
+plt.plot(SNR_dB, NMSE_4.to('cpu'), label='channelNet w/ I ', linewidth=1, linestyle='--', marker='x', color="tab:green")  ###
+plt.plot(SNR_dB, NMSE_5.to('cpu'), label='channelNet w/ D ', linewidth=1, linestyle=':', marker='x', color="tab:green")  ###
+plt.plot(SNR_dB, NMSE_6.to('cpu'), label='channelNet w/ H ', linewidth=1, linestyle='-', marker='x', color="tab:green")  ###
 
 plt.plot(SNR_dB, NMSE_7.to('cpu'), label='ISTANet w/ I ', linewidth=1, linestyle='--', marker='x', color="tab:brown")  ###
 plt.plot(SNR_dB, NMSE_8.to('cpu'), label='ISTANet w/ D ', linewidth=1, linestyle=':', marker='x', color="tab:brown")  ###
@@ -297,6 +260,6 @@ plt.ylabel('NMSE(dB)')
 plt.legend(loc='upper right', bbox_to_anchor=(1, 1), ncol=2, fontsize='small')
 plt.grid(True)
 # plt.savefig('./simulation/result/snr/LS_mlp_Chest_-4_vs_i2.png')   ###
-save_path = os.path.join(script_dir, 'snr', 'SP_%s_MLP_vs_CN_IN__.pdf'%(channel)) #  %(IRS_coef_type)
+save_path = os.path.join(script_dir, 'snr', 'SP_%s_MLP_vs_CN_IN_.pdf'%(channel)) #  %(IRS_coef_type)
 plt.savefig(save_path)   ###
 

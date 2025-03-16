@@ -25,6 +25,8 @@ class MLP(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc5 = nn.Linear(hidden_dim, hidden_dim)
         self.fco = nn.Linear(hidden_dim, ouput_dim)
         self.activation = nn.Tanh()
         # self.dropout = nn.Dropout(p=0.05)
@@ -35,7 +37,8 @@ class MLP(nn.Module):
         x = self.activation(self.fc2(x))
         # x = self.dropout(x)
         x = self.activation(self.fc3(x))
-        # x = self.dropout(x)
+        x = self.activation(self.fc4(x))
+        x = self.activation(self.fc5(x))
         x = self.fco(x)
         return x 
     
