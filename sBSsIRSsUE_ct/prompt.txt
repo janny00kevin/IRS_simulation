@@ -1,0 +1,65 @@
+  python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train.py -lr 1e-4 -psi i -ch 'uma' -ep 100
+  python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train.py -lr 1e-4 -psi d -ch 'uma' -ep 13 -cuda 1
+  python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train.py -lr 1e-4 -psi h -ch 'uma' -ep 13 -cuda 2
+
+##### original confihuration (Wu 4,8,4,32) #####
+
+##### UMa #####   limited by 1e-4 ~ 1e-6 (BI) and 1e-4 ~ 1e-6 (IU)
+
+### ISTA-Net training
+python IRS_simulation/sBSsIRSsUE_ct/ISTANet_ct_train.py -lr 1e-3 -psi i -ch 'uma' -ep 1000 -mbs 1000 -cuda 0
+python IRS_simulation/sBSsIRSsUE_ct/ISTANet_ct_train.py -lr 1e-3 -psi i -ch 'uma' -ep 1000 -mbs 1000 -cuda 1
+python IRS_simulation/sBSsIRSsUE_ct/ISTANet_ct_train.py -lr 1e-3 -psi i -ch 'uma' -ep 1000 -mbs 1000 -cuda 2
+
+### channelNet training
+python IRS_simulation/sBSsIRSsUE_ct/elbir_ct_train.py -lr 1e-4 -psi i -ch 'uma' -ep 1000 -mbs 1000 -cuda 0
+  Early stopping triggered after 5 epochs without improvement
+  validation loss:  1.28046715259552
+  tNMSE:1.280, vNMSE:0.744, -4:1.604, 10:-4.903, g:6.38e+03:   3%|¦?                                    | 32000/1000000 [1:30:49<45:47:22,  5.87it/s]
+python IRS_simulation/sBSsIRSsUE_ct/elbir_ct_train.py -lr 1e-4 -psi d -ch 'uma' -ep 1000 -mbs 1000 -cuda 1
+  Early stopping triggered after 5 epochs without improvement
+  tNMSE:1.518, vNMSE:0.839, -4:2.433, 10:-4.268, g:1.16e+04:   1%|¦                                       | 14000/1000000 [42:41<50:07:09,  5.46it/s]
+python IRS_simulation/sBSsIRSsUE_ct/elbir_ct_train.py -lr 1e-4 -psi h -ch 'uma' -ep 1000 -mbs 1000 -cuda 2
+
+### NP PD MLP training plus SCHEDULER
+python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train.py -lr 1e-3 -psi i -ch 'uma' -ep 1000
+python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train.py -lr 1e-3 -psi d -ch 'uma' -ep 1000
+python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train.py -lr 1e-3 -psi h -ch 'uma' -ep 1000
+
+# The mod. was done at 3/11. There is a wrong restore at 3/14 mistakenly due to using git reset --hard, though the content are the same
+
+
+##### InF #####   limited by 1e-2 ~ 1e-4 (BI) and 1e-1 ~ 1e-3 (IU)
+
+### NP PD MLP training (SCHEDULER)
+python IRS_simulation/sBSsIRSsUE_ct/train_NP_PD_MLP_ct_sche.py -lr 1e-3 -psi i -ch 'inf' -cuda 0
+  tNMSE:0.628, vNMSE:1.615, -4:5.808, 10:-2.385, g:3.13e+01:  10%|¦¦¦?                               | 96000/1000000 [09:30<1:29:36, 168.14it/s]
+python IRS_simulation/sBSsIRSsUE_ct/train_NP_PD_MLP_ct_sche.py -lr 1e-3 -psi d -ch 'inf' -cuda 1
+  tNMSE:0.729, vNMSE:1.873, -4:8.021, 10:-2.413, g:5.08e+01:   6%|¦¦?                                | 65000/1000000 [06:18<1:30:46, 171.66it/s]
+python IRS_simulation/sBSsIRSsUE_ct/train_NP_PD_MLP_ct_sche.py -lr 1e-3 -psi h -ch 'inf' -cuda 2
+  tNMSE:0.675, vNMSE:2.054, -4:7.256, 10:-1.815, g:5.53e+01:   8%|¦¦?                                | 85000/1000000 [09:04<1:37:36, 156.25it/s]
+
+### channelNet
+python IRS_simulation/sBSsIRSsUE_ct/train_elbir_ct.py -lr 1e-4 -psi i -ch 'inf' -cuda 0
+  tNMSE:1.027, vNMSE:1.934, -4:7.702, 10:-3.036, g:4.77e+02:   1%|?                                   | 6000/1000000 [16:59<46:54:07,  5.89it/s]
+python IRS_simulation/sBSsIRSsUE_ct/train_elbir_ct.py -lr 1e-4 -psi d -ch 'inf' -cuda 1
+  tNMSE:0.901, vNMSE:1.797, -4:7.058, 10:-3.047, g:6.36e+02:   1%|?                                   | 6000/1000000 [17:38<48:43:26,  5.67it/s]
+python IRS_simulation/sBSsIRSsUE_ct/train_elbir_ct.py -lr 1e-4 -psi h -ch 'inf' -cuda 2
+  tNMSE:0.950, vNMSE:1.928, -4:6.411, 10:-1.837, g:4.26e+02:   1%|?                                   | 6000/1000000 [19:24<53:35:46,  5.15it/s]
+
+### ISTA-Net
+python IRS_simulation/sBSsIRSsUE_ct/train_ISTANet_ct.py -lr 1e-3 -psi i -ch 'inf' -cuda 0
+
+python IRS_simulation/sBSsIRSsUE_ct/train_ISTANet_ct.py -lr 1e-3 -psi d -ch 'inf' -cuda 1
+
+python IRS_simulation/sBSsIRSsUE_ct/train_ISTANet_ct.py -lr 1e-3 -psi h -ch 'inf' -cuda 2
+
+
+
+
+tNMSE:0.788, vNMSE:1.536, -4:7.371, 10:-2.569, g:1.62e+03:   1%|?                                   | 5244/1000000 [31:29<99:32:54,  2.78it/s]
+
+
+
+### testing ###
+python IRS_simulation/sBSsIRSsUE_ct/test_InF_3models.py
