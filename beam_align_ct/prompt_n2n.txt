@@ -1,0 +1,13 @@
+
+
+##### end to end Tx beam align, null, or omnidirectional but Rx omni #####
+### UMa ###
+forget to record
+
+### InF ###
+python IRS_simulation/beam_align_ct/train_NP_PD_MLP_ct_n2n.py -lr 1e-3 -ch 'inf' -str a -cuda 0
+  tNMSE:0.092, vNMSE:0.152, -4:-5.511, 10:-13.367, g:2.95e+00:   6%|¦¦?                                   | 56000/1000000 [05:56<1:40:08, 157.10it/s]
+python IRS_simulation/beam_align_ct/train_NP_PD_MLP_ct_n2n.py -lr 1e-3 -ch 'inf' -str n -cuda 1
+  tNMSE:0.391, vNMSE:0.475, -4:-2.875, 10:-5.625, g:7.11e+00:   5%|¦¦                                     | 54000/1000000 [05:09<1:30:20, 174.52it/s]
+python IRS_simulation/beam_align_ct/train_NP_PD_MLP_ct_n2n.py -lr 1e-3 -ch 'inf' -str o -cuda 2
+  tNMSE:0.104, vNMSE:0.135, -4:-6.590, 10:-14.456, g:1.87e+00:   9%|¦¦¦?                                  | 89000/1000000 [08:03<1:22:29, 184.05it/s]
