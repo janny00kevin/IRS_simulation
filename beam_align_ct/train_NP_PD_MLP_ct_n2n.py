@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
 from tqdm import tqdm
-from utils.ct_channels_align_null_omni import importData
+from utils.ct_n2n_channels_align_null_omni import importData
 from utils.complex_utils import turnReal, turnCplx, vec
 from utils.NN_model.MLP_2layer_1024 import MLP
 import os
@@ -82,8 +82,8 @@ def train(size, hidden_sizes, lr, num_epochs, batch_size, num_minibatch, cuda, s
     print('training with SNR_dB:',SNR_dB)
 
     ## load training and testing data
-    h, y, h_mean, h_std = importData(train_size, n_R, 2, 2, T, SNR_lin, device, 'train', channel, steering)
-    h_test, y_test, _, _ = importData(test_size, n_R, 2, 2, T, SNR_lin, device, 'val', channel, steering)
+    h, y, h_mean, h_std = importData(train_size, 4, 2, 2, 2, T, SNR_lin, device, 'train', channel, steering)
+    h_test, y_test, _, _ = importData(test_size, 4, 2, 2, 2, T, SNR_lin, device, 'val', channel, steering)
     print('h_mean:',h_mean, 'h_std:',h_std)
     c = torch.cat((torch.zeros(n_R*n_T,1), torch.ones(1,1))).to(torch.complex64).to(device)
     D = torch.cat((torch.eye(n_R*n_T), torch.zeros(n_R*n_T,1)),1).to(torch.complex64).to(device)

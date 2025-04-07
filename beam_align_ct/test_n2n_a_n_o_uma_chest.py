@@ -9,7 +9,7 @@ from utils.complex_utils import turnReal, turnCplx, vec
 from utils.get_IRS_coef import get_IRS_coef
 from utils.LMMSE import LMMSE_solver
 import os  
-from utils.ct_channels_align_null_omni import importData, steering_pilot
+from utils.ct_n2n_channels_align_null_omni import importData, steering_pilot
 from utils.steering_vector import steering_vector
 
 torch.manual_seed(0)
@@ -21,15 +21,17 @@ n_T_x = 2
 n_T_y = 2
 n_T = n_T_x * n_T_y
 # n_I = 8
-n_R = 8
+n_R_x = 4
+n_R_y = 2
+n_R = n_R_x * n_R_y
 T = 4
 
 # MLPs
-filename1 = os.path.join(script_dir, 'trained_model', '0.505_PD_uma_MLP_str_a_a_lr1e-03_[64, 1024, 66]_ep64.pt')
+filename1 = os.path.join(script_dir, 'trained_model', '0.507_PD_uma_MLP_str_a_a_lr1e-03_[64, 1024, 66]_ep61.pt')
 checkpoint1 = torch.load(filename1, weights_only=False)
-filename2 = os.path.join(script_dir, 'trained_model', '1.075_PD_uma_MLP_str_n_a_lr1e-03_[64, 1024, 66]_ep59.pt')
+filename2 = os.path.join(script_dir, 'trained_model', '1.079_PD_uma_MLP_str_n_a_lr1e-03_[64, 1024, 66]_ep59.pt')
 checkpoint2 = torch.load(filename2, weights_only=False)
-filename3 = os.path.join(script_dir, 'trained_model', '0.539_PD_uma_MLP_str_o_a_lr1e-03_[64, 1024, 66]_ep84.pt')
+filename3 = os.path.join(script_dir, 'trained_model', '0.552_PD_uma_MLP_str_o_a_lr1e-03_[64, 1024, 66]_ep87.pt')
 checkpoint3 = torch.load(filename3, weights_only=False)
 
 # # # channelNets
@@ -95,9 +97,9 @@ channel = 'uma'
 # _, y_test_d, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef='d', phase = 'test', channel=channel, config = 'o')
 # h_test_o, y_test_h_o, h_mean_o, h_std_o = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef='h', phase = 'test', channel=channel, config = 'o')
 # h_test_o = h_test_o.reshape(len(SNR_lin), datasize_per_SNR, n_R*n_T*n_I*2)
-h_test, y_test_a, h_mean, h_std = importData(test_size, n_R, n_T_x, n_T_y, T, SNR_lin, device, 'test', channel, steering = 'a')
-_, y_test_n, _, _ = importData(test_size, n_R, n_T_x, n_T_y, T, SNR_lin, device, 'test', channel, steering = 'n')
-_, y_test_o, _, _ = importData(test_size, n_R, n_T_x, n_T_y, T, SNR_lin, device, 'test', channel, steering = 'o')
+h_test, y_test_a, h_mean, h_std = importData(test_size, n_R_x, n_R_y, n_T_x, n_T_y, T, SNR_lin, device, 'test', channel, steering = 'a')
+_, y_test_n, _, _ = importData(test_size, n_R_x, n_R_y, n_T_x, n_T_y, T, SNR_lin, device, 'test', channel, steering = 'n')
+_, y_test_o, _, _ = importData(test_size, n_R_x, n_R_y, n_T_x, n_T_y, T, SNR_lin, device, 'test', channel, steering = 'o')
                                             # importData(data_size, n_R, n_T_x, n_T_y, T, SNR_lin, device, phase = 'train', channel='x', steering='x')
 h_test = h_test.reshape(len(SNR_lin), datasize_per_SNR, n_R*n_T*2)
 # y_test_i = y_test_i.reshape(len(SNR_lin), datasize_per_SNR, n_R*T*2)
@@ -259,9 +261,9 @@ plt.plot(SNR_dB, NMSE_LM_o.to('cpu'), label='LMMSE w/ tx omni', linewidth=1, lin
 # plt.plot(SNR_dB, NMSE_8.to('cpu'), label='ISTANet w/ H align', linewidth=1, linestyle='-', marker='x', color="tab:brown")  ###
 # # plt.plot(SNR_dB, NMSE_9.to('cpu'), label='ISTANet w/ H ', linewidth=1, linestyle='-', marker='x', color="tab:brown")  ###
 
-plt.plot(SNR_dB, NMSE_1.to('cpu'), label='NP PD w/ tx align', linewidth=1, linestyle='-', marker='x', color="tab:orange")   ###
-plt.plot(SNR_dB, NMSE_2.to('cpu'), label='NP PD w/ tx null', linewidth=1, linestyle=':', marker='x', color="tab:orange")  ###
-plt.plot(SNR_dB, NMSE_3.to('cpu'), label='NP PD w/ tx omni', linewidth=1, linestyle='--', marker='x', color="tab:orange")  ###
+# plt.plot(SNR_dB, NMSE_1.to('cpu'), label='NP PD w/ tx align', linewidth=1, linestyle='-', marker='x', color="tab:orange")   ###
+# plt.plot(SNR_dB, NMSE_2.to('cpu'), label='NP PD w/ tx null', linewidth=1, linestyle=':', marker='x', color="tab:orange")  ###
+# plt.plot(SNR_dB, NMSE_3.to('cpu'), label='NP PD w/ tx omni', linewidth=1, linestyle='--', marker='x', color="tab:orange")  ###
 
 
 # plt.plot(SNR_dB, NMSE_3,'-x', label='channelNet w/o act. func.')  ###
@@ -278,6 +280,6 @@ plt.ylabel('NMSE(dB)')
 plt.legend(loc='upper right', bbox_to_anchor=(1, 1), ncol=2, fontsize='small')
 plt.grid(True)
 # plt.savefig('./simulation/result/snr/LS_mlp_Chest_-4_vs_i2.png')   ###
-save_path = os.path.join(script_dir, 'snr', 'beam_align_%s_a_n_o_T%s.pdf'%(channel, T)) #  %(IRS_coef_type)
+save_path = os.path.join(script_dir, 'snr', 'beam_align_%s_ano_Rx_align_23p1_conj.pdf'%(channel)) #  %(IRS_coef_type)
 plt.savefig(save_path)   ###
 
