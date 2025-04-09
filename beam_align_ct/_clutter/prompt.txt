@@ -1,1 +1,0 @@
-"exp_tx_beampattern.py" is the early version of "n2n_rx_sig pwr_align_null_omni.py"

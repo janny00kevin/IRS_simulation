@@ -1,0 +1,2 @@
+### The top half is beam alined in the IRS (BS & UE omni); the bottom half is N2N steering the Tx beam but not steering the Rx beam ### 
+The two half of this folder (top and bottom halves files) are used to see whether the ChEst performance will get better if we turn the beam aligned, null, or omnidirectional.

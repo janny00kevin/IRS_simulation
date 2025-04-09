@@ -1,6 +1,0 @@
-python IRS_simulation/beam_align_ct_precoder/train_NP_PD_MLP_ct_n2n_precoder.py -lr 1e-3 -ch 'uma' -str a -cuda 1
-  tNMSE:0.912, vNMSE:0.987, -4:-0.179, 10:1.352, g:3.89e+04:   9%|¦¦¦?                                        | 88000/1000000 [07:44<1:20:10, 189.59it/s]
-python IRS_simulation/beam_align_ct_precoder/train_NP_PD_MLP_ct_n2n_precoder.py -lr 1e-3 -ch 'uma' -str n -cuda 1
-  tNMSE:0.938, vNMSE:1.050, -4:0.280, 10:1.077, g:1.22e+07:   8%|¦¦¦?                                         | 75000/1000000 [06:25<1:19:14, 194.55it/s]
-python IRS_simulation/beam_align_ct_precoder/train_NP_PD_MLP_ct_n2n_precoder.py -lr 1e-3 -ch 'uma' -str o -cuda 2
-  tNMSE:0.264, vNMSE:0.283, -4:-3.095, 10:-10.309, g:4.97e+01:   9%|¦¦¦¦                                      | 86000/1000000 [07:02<1:14:54, 203.37it/s]
