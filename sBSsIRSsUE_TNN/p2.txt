@@ -1,0 +1,99 @@
+##### TNN dBm #####
+
+##### original configuration (Wu 4,8,4,32) #####
+
+##### UMa #####   limited by 1e-4 ~ 1e-6 (BI) and 1e-4 ~ 1e-6 (IU)
+  ### ISTA-Net training
+  ### channelNet training
+### NP PD MLP training w/ tnn adam
+# I, D, H cases use the original trained models
+# only needed for training the TNN one
+    python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_TNN.py -ch uma
+      tNMSE:0.750, vNMSE:0.818, -4:-2.300, 10:-3.627, g:2.21e+03:   7%|¦¦                             | 66000/1000000 [11:54<2:48:31, 92.37it/s]
+# this is wrong b/c when the seed in add_noise is fixed then they are using the same noise to train, so it perform pretty bad in testing 
+
+# new add_noise w/ diff seeds
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_TNN.py -ch uma
+  tNMSE:2.002, vNMSE:1.010, -4:3.627, 10:-4.019, g:2.13e+03:   9%|¦¦?                            | 92000/1000000 [12:02<1:58:54, 127.27it/s]
+# because they perform the same vs. SNR -> consider vs. fixed noise power using Hadamard (the 3rd row below)
+
+# The noise power calculate by the recieved signal power of using I, D, H, and TNN be \bPsi 
+  Noise power: tensor([5.9124e-15, 3.7305e-15, 2.3538e-15, 1.4851e-15, 9.3706e-16, 5.9124e-16, 3.7305e-16, 2.3538e-16], device='cuda:0')
+  Noise power: tensor([4.7299e-14, 2.9844e-14, 1.8830e-14, 1.1881e-14, 7.4965e-15, 4.7299e-15, 2.9844e-15, 1.8830e-15], device='cuda:0')
+Noise power: tensor([4.7299e-14, 2.9844e-14, 1.8830e-14, 1.1881e-14, 7.4965e-15, 4.7299e-15, 2.9844e-15, 1.8830e-15], device='cuda:0')
+  Noise power: tensor([4.8730e-14, 3.0747e-14, 1.9400e-14, 1.2240e-14, 7.7232e-15, 4.8730e-15, 3.0747e-15, 1.9400e-15], device='cuda:0')
+
+# then I, D, H, and TNN should also been trained using fixed noise power (dbm)
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_dbm.py -ch uma -psi i
+  tNMSE:1.854, vNMSE:2.629, -4:7.588, 10:-0.929, g:2.61e+02:   6%|¦¦?                                     | 55000/1000000 [06:04<1:44:17, 151.02it/s]
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_dbm.py -ch uma -psi d
+  tNMSE:1.170, vNMSE:1.242, -4:2.485, 10:-3.937, g:2.15e+02:   9%|¦¦¦¦                                    | 90000/1000000 [12:19<2:04:37, 121.69it/s]
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_dbm.py -ch uma -psi h
+  tNMSE:1.051, vNMSE:1.163, -4:3.899, 10:-3.839, g:2.02e+02:  16%|¦¦¦¦¦¦?                                | 165000/1000000 [16:37<1:24:07, 165.43it/s]
+# TNN actually is the original one not trained using dbm, b/c the result is pretty wierd
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_TNN_dbm.py -ch uma -cuda 1
+  tNMSE:2.002, vNMSE:1.010, -4:3.627, 10:-4.019, g:2.13e+03:   9%|¦¦?                            | 92000/1000000 [14:54<2:27:10, 102.83it/s]
+
+
+
+##### InF #####   limited by 1e-2 ~ 1e-4 (BI) and 1e-1 ~ 1e-3 (IU)
+# TNN
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_TNN.py -ch inf
+  tNMSE:0.663, vNMSE:2.016, -4:6.163, 10:-1.452, g:4.84e+01:   8%|¦¦?                            | 77000/1000000 [09:01<1:48:06, 142.30it/s]
+  
+# noise level
+  Noise power: tensor([4.8599e-07, 3.0664e-07, 1.9348e-07, 1.2207e-07, 7.7024e-08, 4.8599e-08, 3.0664e-08, 1.9348e-08], device='cuda:2')
+  Noise power: tensor([3.8879e-06, 2.4531e-06, 1.5478e-06, 9.7660e-07, 6.1619e-07, 3.8879e-07, 2.4531e-07, 1.5478e-07], device='cuda:2')
+Noise power: tensor([3.8879e-06, 2.4531e-06, 1.5478e-06, 9.7660e-07, 6.1619e-07, 3.8879e-07, 2.4531e-07, 1.5478e-07], device='cuda:2')
+  Noise power: tensor([4.9686e-06, 3.1350e-06, 1.9780e-06, 1.2481e-06, 7.8747e-07, 4.9686e-07, 3.1350e-07, 1.9780e-07], device='cuda:2')
+  
+### NP PD MLP training (dbm only for i, h)
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_dbm.py -ch inf -psi i -cuda 2
+  tNMSE:1.254, vNMSE:7.391, -4:11.061, 10:1.070, g:7.73e+01:   5%|¦¦                             | 51000/1000000 [04:05<1:16:15, 207.42it/s]
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_dbm.py -ch inf -psi h
+  tNMSE:0.742, vNMSE:1.678, -4:7.038, 10:-4.514, g:5.21e+01:  10%|¦¦¦¦?                                              | 96000/1000000 [11:00<1:43:40, 145.32it/s]
+  ### channelNet
+  ### ISTA-Net
+  
+### testing ###
+
+
+### just to compare (original IRS estimating) ###
+python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train_sche.py -lr 1e-3 -psi h -ch 'uma' -ep 1000 -cuda 1
+  tNMSE:1.154, vNMSE:0.959, -4:2.229, 10:-3.892, g:1.64e+02:  10%|¦¦¦                           | 103000/1000000 [13:03<1:53:43, 131.45it/s]
+
+
+
+
+### multi layers ###
+  #uma
+
+
+  #inf
+
+  #10 layers
+    tNMSE:0.590, vNMSE:1.600, -4:5.309, 10:-1.038, g:6.31e+01:  10%|¦¦¦?                           | 101000/1000000 [19:01<2:49:19, 88.49it/s]
+    1.393_SP_inf_MLP_psi_h_lr1e-04_[256, 1024, 258]_ep101.pt
+
+## uma
+# 5 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch uma -cuda 1 -psi h -lr 1e-4 -lyr 5
+  tNMSE:1.346, vNMSE:1.131, -4:2.363, 10:-5.101, g:4.14e+02:   7%|¦¦¦                                   | 66000/1000000 [12:16<2:53:40, 89.63it/s]
+  1.011_SP_uma_5MLP_psi_h_lr1e-04_[256, 1024, 258]_ep66.pt
+# 10 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch uma -cuda 2 -psi h -lr 1e-4 -lyr 10
+  tNMSE:1.063, vNMSE:0.922, -4:1.146, 10:-4.343, g:2.67e+02:  13%|¦¦¦¦?                                | 126000/1000000 [41:55<4:50:48, 50.09it/s]
+  0.895_SP_uma_10MLP_psi_h_lr1e-04_[256, 1024, 258]_ep126.pt
+## inf
+# 5 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 1 -psi h -lr 1e-4 -lyr 5
+  tNMSE:0.557, vNMSE:1.475, -4:4.440, 10:-1.054, g:5.49e+01:  12%|¦¦¦¦?                                | 120000/1000000 [24:42<3:01:15, 80.92it/s]
+  1.228_SP_inf_5MLP_psi_h_lr1e-04_[256, 1024, 258]_ep120.pt
+# 10 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 2 -psi h -lr 1e-4 -lyr 10
+  tNMSE:0.805, vNMSE:2.006, -4:6.447, 10:-1.553, g:3.67e+02:   5%|¦¦                                    | 54000/1000000 [18:59<5:32:39, 47.40it/s]
+  1.313_SP_inf_10MLP_psi_h_lr1e-04_[256, 1024, 258]_ep54.pt
+
+
+
+

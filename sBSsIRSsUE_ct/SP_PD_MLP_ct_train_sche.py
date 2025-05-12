@@ -86,8 +86,8 @@ def train(size, hidden_sizes=[64, 32], lr=1e-3, num_epochs = 3,
     print('training with SNR_dB:',SNR_dB)
 
     ## load training and testing data
-    h, y, h_mean, h_std = importData(train_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, case = 'train', channel=channel)
-    h_test, y_test, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, case = 'val', channel=channel)
+    h, y, h_mean, h_std = importData(train_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, phase = 'train', channel=channel)
+    h_test, y_test, _, _ = importData(test_size, n_R, n_I, n_T, T, SNR_lin, device, IRScoef=IRS_coe_type, phase = 'val', channel=channel)
     print('h_mean:',h_mean, 'h_std:',h_std)
     c = torch.cat((torch.zeros(n_R*n_T*n_I,1), torch.ones(1,1))).to(torch.complex64).to(device)
     D = torch.cat((torch.eye(n_R*n_T*n_I), torch.zeros(n_R*n_T*n_I,1)),1).to(torch.complex64).to(device)

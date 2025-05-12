@@ -1,0 +1,73 @@
+##### TNN dBm #####
+
+##### original configuration (Wu 4,8,4,32) #####
+
+
+
+### just to compare (original IRS estimating) ###
+    # uma
+    python IRS_simulation/sBSsIRSsUE_ct/SP_PD_MLP_ct_train_sche.py -lr 1e-3 -psi h -ch 'uma' -ep 1000 -cuda 1
+      tNMSE:1.154, vNMSE:0.959, -4:2.229, 10:-3.892, g:1.64e+02:  10%|¦¦¦                           | 103000/1000000 [13:03<1:53:43, 131.45it/s]
+      0.954_SP_uma_MLP_psi_h_lr1e-03_[256, 1024, 258]_ep103.pt
+    # inf
+    python IRS_simulation/sBSsIRSsUE_ct/train_NP_PD_MLP_ct_sche.py -lr 1e-3 -psi h -ch 'inf' -cuda 2
+      tNMSE:0.675, vNMSE:2.054, -4:7.256, 10:-1.815, g:5.53e+01:   8%|¦¦?                                | 85000/1000000 [09:04<1:37:36, 156.25it/s]
+      1.708_SP_inf_MLP_psi_h_lr1e-03_[256, 1024, 258]_ep85.pt
+
+
+### multi layers ###
+## uma
+# 5 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch uma -cuda 1 -psi h -lr 1e-4 -lyr 5
+  tNMSE:1.346, vNMSE:1.131, -4:2.363, 10:-5.101, g:4.14e+02:   7%|¦¦                              | 66000/1000000 [13:58<3:17:48, 78.69it/s]
+  1.011_SP_uma_5MLP_psi_h_lr1e-04_[256, 1024, 258]_ep66.pt
+# 10 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch uma -cuda 2 -psi h -lr 1e-4 -lyr 10
+  tNMSE:1.063, vNMSE:0.922, -4:1.146, 10:-4.343, g:2.67e+02:  13%|¦¦¦¦?                                | 126000/1000000 [41:55<4:50:48, 50.09it/s]
+  0.895_SP_uma_10MLP_psi_h_lr1e-04_[256, 1024, 258]_ep126.pt
+## inf
+# 5 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 1 -psi h -lr 1e-4 -lyr 5
+  tNMSE:0.557, vNMSE:1.475, -4:4.440, 10:-1.054, g:5.49e+01:  12%|¦¦¦¦?                                | 120000/1000000 [24:42<3:01:15, 80.92it/s]
+  1.228_SP_inf_5MLP_psi_h_lr1e-04_[256, 1024, 258]_ep120.pt
+# 10 layers MLP
+python IRS_simulation/sBSsIRSsUE_TNN/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 2 -psi h -lr 1e-4 -lyr 10
+  tNMSE:0.805, vNMSE:2.006, -4:6.447, 10:-1.553, g:3.67e+02:   5%|¦?                              | 54000/1000000 [21:11<6:11:17, 42.46it/s]
+  1.313_SP_inf_10MLP_psi_h_lr1e-04_[256, 1024, 258]_ep54.pt
+
+### using the same \h realizations to train ### 
+## uma 0.954
+  python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch uma -cuda 0 -psi h -lr 1e-4 -lyr 2
+    tNMSE:1.795, vNMSE:2.114, -4:4.270, 10:0.630, g:2.11e+02:   6%|¦?                              | 57000/1000000 [07:42<2:07:35, 123.18it/s]
+    1.209_8SNR_uma_2MLP_psi_h_lr1e-04_[256, 1024, 258]_ep57.pt
+python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch uma -cuda 0 -psi h -lr 1e-4 -lyr 5
+  tNMSE:0.640, vNMSE:0.763, -4:1.524, 10:-4.281, g:4.95e+01:  17%|¦¦¦¦¦?                         | 169999/1000000 [42:44<2:52:20, 80.26it/s]
+  0.720_8SNR_uma_5MLP_psi_h_lr1e-04_[256, 1024, 258]_ep170.pt
+python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch uma -cuda 0 -psi h -lr 1e-4 -lyr 10
+  tNMSE:0.674, vNMSE:0.803, -4:1.084, 10:-4.004, g:8.85e+01:  10%|¦¦¦?                           | 104000/1000000 [37:24<5:22:16, 46.34it/s]
+  0.730_8SNR_uma_10MLP_psi_h_lr1e-04_[256, 1024, 258]_ep104.pt
+## inf 1.708
+  python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 2 -psi h -lr 1e-3 -lyr 2
+    tNMSE:0.668, vNMSE:2.195, -4:8.152, 10:2.078, g:3.64e+01:   7%|¦¦?                              | 73000/1000000 [17:25<3:41:17, 69.82it/s]
+    2.052_8SNR_inf_2MLP_psi_h_lr1e-03_[256, 1024, 258]_ep73.pt
+  python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 0 -psi h -lr 1e-4 -lyr 2
+    tNMSE:0.731, vNMSE:2.110, -4:7.519, 10:-1.756, g:6.85e+01:   7%|¦¦?                            | 69000/1000000 [08:17<1:51:55, 138.64it/s]
+    1.840_8SNR_inf_2MLP_psi_h_lr1e-04_[256, 1024, 258]_ep69.pt
+    python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 0 -psi h -lr 1e-4 -lyr 5
+      tNMSE:0.581, vNMSE:1.674, -4:4.608, 10:1.441, g:2.24e+01:  10%|¦¦¦?                            | 103000/1000000 [58:22<8:28:19, 29.41it/s]
+      1.185_8SNR_inf_5MLP_psi_h_lr1e-04_[256, 1024, 258]_ep103.pt
+python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 1 -psi h -lr 5e-5 -lyr 5
+  Training completed after 129 epochs. Best loss: 1.282, best n4: 2.832, best 10: 0.412
+  tNMSE:0.516, vNMSE:1.388, -4:4.581, 10:-3.304, g:3.38e+01:  13%|¦¦¦?                           | 129000/1000000 [24:30<2:45:28, 87.72it/s]
+  1.282_8SNR_inf_5MLP_psi_h_lr5e-05_[256, 1024, 258]_ep129.pt
+python IRS_simulation/sBSsIRSsUE_impving/train_NP_PD_MLP_mulLayer.py -ch inf -cuda 0 -psi h -lr 1e-4 -lyr 10
+    tNMSE:0.665, vNMSE:1.908, -4:5.478, 10:1.907, g:4.28e+02:   7%|¦¦                            | 69000/1000000 [1:35:44<21:31:43, 12.01it/s]
+    tNMSE:0.950, vNMSE:2.592, -4:8.742, 10:-2.013, g:4.23e+02:   6%|¦¦                              | 64000/1000000 [21:18<5:11:32, 50.07it/s]
+    Training completed after 64 epochs. Best loss: 1.408, best n4: 1.573, best 10: 1.251
+    tNMSE:0.950, vNMSE:2.592, -4:8.742, 10:-2.013, g:4.23e+02:   6%|¦¦                              | 64000/1000000 [21:11<5:09:59, 50.32it/s]
+    1.408_8SNR_inf_10MLP_psi_h_lr5e-05_[256, 1024, 258]_ep64.pt
+  Training completed after 75 epochs. Best loss: 1.237, best n4: 2.589, best 10: 0.384
+  tNMSE:0.609, vNMSE:1.517, -4:5.038, 10:-3.672, g:5.26e+01:   8%|¦¦?                             | 75000/1000000 [24:40<5:04:16, 50.67it/s]
+  1.237_8SNR_inf_10MLP_psi_h_lr1e-04_[256, 1024, 258]_ep75.pt
+### testing ###
+

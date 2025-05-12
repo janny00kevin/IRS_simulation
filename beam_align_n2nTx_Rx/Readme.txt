@@ -1,1 +1,0 @@
-### align the Tx and Rx beams to see if the perfermance better according to TR38.802, but it's pretty bad ###
