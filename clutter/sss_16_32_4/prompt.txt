@@ -1,0 +1,31 @@
+
+
+### NP PD MLP ###
+# uma
+python "./IRS_simulation/sss_16_32_4/train_NP_PD_MLP_mulLayer.py" -cuda 0 -lyr 5 -ch uma
+  Stopping training as learning rate reached 4.88e-07 at epoch 64, KKT conditions met.
+  Training completed after 64 epochs. Best loss: 1.118, best n4: 1.263, best 10: 0.879
+  tNMSE:0.532, vNMSE:1.122, -4:1.050, 10:-0.556, g:4.43e-04:   6%|¦¦?                               | 6400/100000 [04:35<1:07:05, 23.25it/s]
+python "./IRS_simulation/sss_16_32_4/train_NP_PD_MLP_mulLayer.py" -cuda 0 -lyr 5 -ch uma -hsz 4096
+  Stopping training as learning rate reached 4.88e-07 at epoch 69, KKT conditions met.
+  Training completed after 69 epochs. Best loss: 1.707, best n4: 1.622, best 10: 1.069
+  tNMSE:0.807, vNMSE:1.855, -4:1.828, 10:0.000, g:3.31e-04:   7%|¦¦?                                | 6900/100000 [22:13<4:59:53,  5.17it/s]
+python "./IRS_simulation/sss_16_32_4/train_NP_PD_MLP_mulLayer.py" -cuda 0 -lyr 2 -ch uma -hsz 4096
+  Epoch 37: Learning rate is 7.8e-06,  best loss: 7.373, best n4: 13.630, best 10: 1.672
+# use the final result
+python "./IRS_simulation/sss_16_32_4/train_NP_PD_MLP_mulLayer.py" -cuda 0 -lyr 5 -ch uma
+  Stopping training as learning rate reached 4.88e-07 at epoch 64, KKT conditions met.
+  Training completed after 64 epochs. Best loss: 1.122, best n4: 1.273, best 10: 0.880
+  tNMSE:0.532, vNMSE:1.122, -4:1.050, 10:-0.556, g:4.43e-04:   6%|¦¦?                               | 6400/100000 [04:37<1:07:44, 23.03it/s]
+python "./IRS_simulation/sss_16_32_4/train_NP_PD_MLP_mulLayer.py" -cuda 0 -lyr 10 -ch uma
+  Stopping training as learning rate reached 4.88e-07 at epoch 57, KKT conditions met.
+  Training completed after 57 epochs. Best loss: 2.912, best n4: 6.929, best 10: 2.175
+  tNMSE:2.526, vNMSE:2.912, -4:8.407, 10:3.375, g:1.79e-01:   6%|¦?                                 | 5700/100000 [05:02<1:23:30, 18.82it/s]
+
+  
+# inf
+python "./IRS_simulation/sss_16_32_4/train_NP_PD_MLP_mulLayer.py" -cuda 0 -lyr 5 -ch inf
+  Stopping training as learning rate reached 2.44e-07 at epoch 74, KKT conditions met.
+  Training completed after 74 epochs. Best loss: 3.510, best n4: 2.041, best 10: 1.301
+  tNMSE:0.650, vNMSE:6.535, -4:1.403, 10:0.196, g:1.20e-01:   7%|¦¦¦                                | 7400/100000 [05:14<1:05:41, 23.49it/s]
+  

@@ -1,0 +1,7 @@
+
+
+## mean of MSE of NP PD MLP for nmlz testing dataset (linear and all SNR)
+# inf
+5.7679
+# uma
+28.3282

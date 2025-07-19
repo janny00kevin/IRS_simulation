@@ -1,0 +1,66 @@
+
+
+### NP PD MLP ###
+# use the final result (not using best_model with lowest val loss)
+
+# inf :mse: 84.4083 (2 and 5 layers, 5 layers better)
+python "./IRS_simulation/sss_8_16_4/train_NP_PD_MLP_mulLayer.py" -cuda 0 -lyr 2 -ch inf
+  Stopping training as learning rate reached 4.88e-07 at epoch 94, KKT conditions met.
+  Training completed after 94 epochs. Best loss: 0.971, best n4: 3.468, best 10: 0.294
+  tNMSE:1.520, vNMSE:0.971, -4:5.401, 10:-5.314, g:7.07e-03:   9%|¦¦¦                             | 94000/1000000 [17:23<2:47:38, 90.08it/s]
+python "./IRS_simulation/sss_8_16_4/train_NP_PD_MLP_mulLayer.py" -cuda 1 -lyr 5 -ch inf  -hsz 1024
+  Stopping training as learning rate reached 4.88e-07 at epoch 140, KKT conditions met.
+  Training completed after 140 epochs. Best loss: 0.925, best n4: 2.082, best 10: 0.255
+  tNMSE:0.989, vNMSE:0.925, -4:3.184, 10:-5.932, g:7.12e-05:  14%|¦¦¦¦?                          | 140000/1000000 [45:05<4:37:00, 51.74it/s]
+  
+# uma :mse: 217.7323
+python "./IRS_simulation/sss_8_16_4/train_NP_PD_MLP_mulLayer.py" -cuda 1 -lyr 5 -ch uma
+  Stopping training as learning rate reached 4.88e-07 at epoch 104, KKT conditions met.
+  Training completed after 104 epochs. Best loss: 0.853, best n4: 2.745, best 10: 0.391
+  tNMSE:1.034, vNMSE:0.853, -4:4.385, 10:-4.074, g:9.18e-05:  10%|¦¦¦?                           | 104000/1000000 [32:24<4:39:15, 53.48it/s]
+  
+
+### AE ###
+# inf
+python "./IRS_simulation/sss_8_16_4/train_PD_AE.py" -cuda 1 -ch inf -eps 30 (the same)
+  Training completed after 85 epochs. Best loss: 0.641, best n4: 1.152, best 10: 0.256
+  tNMSE:0.570, vNMSE:0.641, -4:0.616, 10:-5.926, l:81.38, g:6.92e-01, f:-17.15:   8%|¦            | 85000/1000000 [27:56<5:00:50, 50.69it/s]
+-> 96.15 %
+# lr_l 1e-4 -> 1e-5
+python "./IRS_simulation/sss_8_16_4/train_PD_AE.py" -cuda 1 -ch inf -eps 18
+  Training completed after 88 epochs. Best loss: 0.705, best n4: 1.707, best 10: 0.278
+  tNMSE:1.039, vNMSE:0.705, -4:2.322, 10:-5.566, l:9.93, g:5.28e-01, f:-7.46:   9%|¦?             | 88000/1000000 [28:44<4:57:52, 51.03it/s]
+python "./IRS_simulation/sss_8_16_4/train_PD_AE.py" -cuda 1 -ch inf -eps 13 (in b)
+
+# uma
+python "./IRS_simulation/sss_8_16_4/train_PD_AE.py" -cuda 0 -ch uma -eps 60
+  Training completed after 165 epochs. Best loss: 0.818, best n4: 1.705, best 10: 0.484
+  tNMSE:0.682, vNMSE:0.818, -4:2.316, 10:-3.150, l:164.04, g:3.75e+00, f:-12.39:  16%|¦?         | 165000/1000000 [49:26<4:10:14, 55.61it/s]
+-> 94.26 %
+# lr_l 1e-4 -> 1e-5
+python "./IRS_simulation/sss_8_16_4/train_PD_AE.py" -cuda 0 -ch uma -eps 36 (slightly better)
+  Training completed after 95 epochs. Best loss: 0.782, best n4: 1.766, best 10: 0.416
+  tNMSE:0.604, vNMSE:0.782, -4:2.469, 10:-3.810, l:14.80, g:2.08e-02, f:-2.14:  10%|¦?            | 95000/1000000 [28:21<4:30:10, 55.83it/s]
+  
+### ISTA-Net ###
+# inf
+python "./IRS_simulation/sss_8_16_4/train_ISTANet.py" -cuda 1 -ch inf
+  tNMSE:2.286, vNMSE:1.238, -4:3.655, 10:-2.236, g:1.07e+04:   7%|¦¦?                            | 7400/100000 [2:21:21<29:28:56,  1.15s/it]
+# uma
+python "./IRS_simulation/sss_8_16_4/train_ISTANet.py" -cuda 1 -ch uma
+  tNMSE:2.511, vNMSE:2.625, -4:9.339, 10:-0.238, g:3.66e+04:   1%|?                                | 1000/100000 [19:02<31:25:54,  1.14s/it]
+
+### channelNet ###
+epochs_without_improvement:  5
+Early stopping triggered after 5 epochs without improvement
+# inf 
+python "./IRS_simulation/sss_8_16_4/train_channelNet.py" -cuda 0 -ch inf -lr 1e-4
+  tNMSE:1.421, vNMSE:0.952, -4:4.069, 10:-4.286, g:4.40e+03:   2%|?                                | 1500/100000 [29:01<31:45:57,  1.16s/it]
+# uma
+python "./IRS_simulation/sss_8_16_4/train_channelNet.py" -cuda 1 -ch uma -lr 1e-4
+  tNMSE:1.259, vNMSE:0.905, -4:3.474, 10:-3.116, g:1.40e+05:   2%|¦                                | 1600/100000 [31:26<32:13:47,  1.18s/it]
+  
+  
+python "/media/commlab/TwelveTB/home/yngwie/IRS_simulation/sss_8_16_4/test_UMaInF.py" -ch inf
+python "/media/commlab/TwelveTB/home/yngwie/IRS_simulation/sss_8_16_4/test_UMaInF.py" -ch uma
+
